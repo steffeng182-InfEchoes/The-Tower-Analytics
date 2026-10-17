@@ -1,52 +1,50 @@
-# Account Intelligence — stable intermediate release 0.13.1
+# Account Intelligence — Alpha 0.14.0
 
-The complete milestone is **not finished**. This release hardens the existing import and local data workflows and adds a test foundation. It is suitable for the user checks below, subject to the stated OCR limitations.
+**Status: first milestone implemented and technically ready for acceptance testing.** The eight technical acceptance paths are covered below. This is an Alpha release, not a claim that every future game version or screenshot layout is recognised without error.
 
-## What changed
+## Acceptance evidence
 
-- Explicit English/German/day-first/ISO date parsing with invalid-calendar validation. Actual play dates sort ahead of unknown dates; import timestamps never substitute for play timestamps. Calendar comparisons use browser-local days, including runs near midnight. Manual timestamps take precedence.
-- Run start = end minus real duration. Day/night shares use exact local hour boundaries (night 22:00–06:00), not a coarse 15-minute sampling offset. These shares do not establish AFK strategy. Travel/timezone changes remain a limitation: game timestamps do not carry an authoritative timezone.
-- Batch import supports up to 100 reports. Deduplication is scoped to the active profile and also compares timestamp + Tier + Wave + real duration + Coins + Cells when timestamps are available. Text normalization handles whitespace; semantic comparison handles number-locale changes. Undated reports only use text identity because collapsing identical results could discard distinct real runs.
-- Valid prepared batches and restored Run backups write in one IndexedDB transaction. A partial batch reports which chunks failed and retains the input while refreshing successfully imported results. Invalid restore files are rejected before writing any run.
-- History matches require Tier/Wave plus two supported extra fields from date/Coins/Cells. Coins/h is checked as extra evidence, not sufficient on its own. Invalid metrics, conflicting fields, tied candidates, duplicate assignments and same-line multi-column layouts cannot be applied automatically. Compact metric tolerance follows the displayed last digit. Rows cannot borrow metrics from the following card.
-- History confirmation records provenance and hints. A Tier-plus marker remains a tournament candidate, not a confirmed mode. Explicit Dissonance text remains a hint. Visual trophy/Dissonance-icon classification is not implemented. Existing exact timestamps, notes, original reports and confirmed modes remain intact.
-- Account categories now include Ultimate Weapons, modules, cards, relics, bots, enhancements, guardian and other systems. Values are manual category/name/value records; comprehensive system-specific schemas and screenshot parsers are still missing.
-- Confirmed values, observed effects and estimates remain distinct. Estimates require a source/calculation description and never count as confirmed levels. Account changes append to the same store; edits retain a link to the prior entry and validate documented limits. The full timeline is visible. Optional effective dates support historical documentation; run details show only confirmed entries documented by that run's exact time. No account values are projected backward from a later record.
-- Progression separates Tier, manual strategy, detected mode and time period, excludes tournaments and unknown play dates, and requires at least four records over more than one calendar day. It remains descriptive, with no claim that an upgrade caused a change. No speculative upgrade purchase recommendations are added.
-- Removed the automatic startup backfill. Legacy rows receive a read-only compatibility adapter. DB name/version and stores are unchanged. Fixed an existing `prompt` variable shadowing bug that broke date, profile and account edit dialogs.
-- Verbose account analyses are collapsible for the split-screen workflow. Touch buttons have a minimum height of 44 pixels.
-
-## Definition of Done assessment
-
-| Requirement | Status |
+| Definition of Done | Delivered behavior and verification |
 | --- | --- |
-| Realistic reports without metadata | Tested with representative English Battle Report fields and German/English numbers; broader player corpus remains useful |
-| Historical actual dates and sorting | Automated core/DOM/Chromium coverage; unknown dates stay unknown |
-| 30+ batch and duplicate protection | 30-report repeat import tested, per-profile isolation tested; limit 100 |
-| History image processing and safe reconciliation | OCR text matching/save tested; real screenshot OCR accuracy still needs validation, multi-column layouts deliberately unresolved |
-| Traceable account history | Append-only history, evidence types, effective timestamps, backup compatibility implemented; richer per-system models remain open |
-| First progression analysis | Weighted measured rates, segmented descriptive trends and historical account lookup present; no causal/ROI model |
-| Critical automated paths | Core tests, DOM interaction tests, and real Chromium integration suite added |
-| Existing local data | v1→v2 preservation tested and v2 schema unchanged; real user's device data not accessible to development environment |
+| 1. Realistic Battle Reports without required metadata | English report labels with German/English quantities, explicit English/German/day-first/ISO dates, Tier/Wave, exact integer storage, real/game durations, calculated rates, start/end and day/night shares. Explicit Tier-plus marks a tournament; absent mode evidence stays unknown. Invalid dates warn rather than invent a time. |
+| 2. Historical actual dates | Browser-local calendar comparisons, manual time precedence and date-only precision. Import timestamps never substitute for play dates. Unknown days sort last. The chart uses weighted daily points within one comparable group, so unknown intra-day order is not drawn as exact chronology. |
+| 3. 30+ batch and reliable duplicate handling | Up to 100 reports. 30-report import/reimport and independent profiles tested. Text normalization and dated semantic identity are shared by single/batch/restore paths. Duplicate checks run inside the write transaction, preventing concurrent import races. |
+| 4. History screenshots and safe report reconciliation | Real Tesseract, original/processed image passes, bounded canvas size, source-row geometry, German/English quantities, slash-date candidates, compact suffixes, Tier-plus + trophy-shape and purple-badge proposals. Actual public image fixtures and the user's own private image were recognised locally; the private image produced six full rows and the expected tournament/Dissonance proposals without tagging the normal rows. Public real Worker/WASM OCR is part of CI. Matching requires Tier/Wave and two extra supporting fields; ties, conflicts, multiple columns and duplicate assignments stay unresolved. Every applied row must be explicitly reviewed. |
+| 5. Traceable Account history | Labs, Workshop, UWs, modules, cards, relics and additional systems. Searchable catalogue, free entries, optional rarity/slot/sub-effect metadata, explicit Level/observed/estimate distinction, source/calculation field, append-only edits and optional effective dates. OCR suggestions and batch text can be corrected and saved selectively. The timeline and existing backup formats retain provenance. |
+| 6. First data-driven progression | Weighted rates segmented by Tier, strategy, mode and period; tournaments excluded. Day/night comparison needs two runs per side; trends need four dated runs over more than one calendar day. Account recordings in the same interval are visible, and run details only show confirmed account values documented by that exact time. Isolated lab-factor checks disclose their scope and source; no unsupported purchase ranking or causal claim. |
+| 7. Automated critical paths | Regression tests, DOM interactions, real Chromium integration, actual Node/WASM OCR plus production browser canvas processing, and actual browser Worker/WASM recognition. These run in GitHub Actions. |
+| 8. Existing data accessible | DB name, version 2, stores and keys unchanged. No startup backfill or destructive migration. Version-1 upgrade retention, no-write legacy adaptation, atomic rollback, global ID collision protection and legacy restore behavior are tested. |
 
-## Knowledge catalogue boundary
+Technical test readiness is distinct from the owner's final acceptance on the physical Samsung device. No development tool has read or migrated the production phone's IndexedDB.
 
-The inherited catalogue contains source URLs and prior claimed limits/check dates. Those sources have **not been reverified in this release**. The UI now makes that status explicit instead of presenting the catalogue as newly verified. Existing numeric validation remains; observed effect values and estimates bypass level-limit validation. A genuinely current, audited mechanics catalogue with dependencies and formulas is unfinished and blocks reliable automatic upgrade recommendations.
+## What is considered evidence
 
-## Remaining risks and next development work
+- A copied report remains the source of its numeric results. History reconciliation adds provenance/date/mode context; it never overwrites original Coins, Cells, duration, notes or report text with OCR values.
+- A History match needs Tier/Wave plus two supported extra fields from date/Coins/Cells. Reported Coins/h is used when available; re-dividing a coarsely rounded Coins total is not used to reject a more precise reported rate.
+- Ambiguous slash dates retain both calendar possibilities until an existing report or explicit correction resolves them. An unresolved date is never converted to an exact midnight timestamp.
+- A possible `8`→`B` compact-suffix repair is shown as an OCR resolution against independent report features. It does not rewrite the report and is excluded from the “mark uncorrected safe matches” shortcut. Such rows still need individual review.
+- Tier-plus and a matching gold cup profile propose Tournament. A purple badge between Tier and Wave proposes Dissonance. They are image proposals until the selected mode and row are confirmed in the review UI. Other skins or purple UI elsewhere are not mode evidence.
+- Account OCR proposes confirmed levels only for explicit `Lv`, `Level` or `Stufe` labels. Bare effects remain observed values; a visible relic name does not establish ownership. The user can correct every proposed value and evidence type before checking it.
+- Knowledge is a **community reference**, not an official patch guarantee. Every catalogue record identifies a source file at an immutable TheTowerSDK revision. Maxima, card effects, relic bonuses and lab unlock metadata are traceable. The three exposed simple lab factors are isolated factors only, not full-account output models. Workshop factors are never inverted into levels.
 
-1. Validate Tesseract with real English/German game-History screenshots, including dark backgrounds, scaling and screenshot columns. Current OCR uses English recognition; OCR library/language assets load from third-party CDNs. No recognition-quality promise is made.
-2. Add explicit visual evidence extraction for trophy and Dissonance symbols, with confidence thresholds and a row-level correction/confirmation flow. Currently the user must inspect the match list before confirming all safe assignments.
-3. Reverify mechanics from authoritative current sources and record rule versions, dependencies and uncertainties. Expand account-specific structures and parsers before giving upgrade ROI advice.
-4. Independently confirmed standard farming modes may be missing in old reports; unlabelled runs remain `unknown`. Unknown groups may contain hidden variation. Manual `Strategie / Modus` is available in Run History.
-5. The production phone's real data has not been opened or migrated by development. Export existing Run and Account backups before a phone test, as with any local-only release. Concurrent imports in separate browser tabs are not serialised across a global uniqueness index; use one tab when importing.
-6. Existing separate Run and Account backup formats are retained. Run restore remains limited to the active matching profile. No full unified cross-profile backup/import format is introduced.
+## Scope boundaries and remaining limits
 
-## User checks on Samsung S24 Ultra
+1. Recognition was checked against two public game screenshots and one private user screenshot. Different languages, fonts, UI changes, crops, severe compression or unfamiliar icon layouts may remain unresolved. This is why row corrections and explicit selection are part of the import flow, rather than an optional safety screen after automatic writes.
+2. Same-line multi-column cards stay unresolved. Partial rows without a header are ignored. A History row without a matching report is not turned into a fabricated full Battle Report or guessed real duration.
+3. Initial production OCR use downloads the pinned Tesseract library/engine/language assets from CDNs. A failed download shows a recoverable error; direct OCR-text input and normal report/account entry remain available. Pictures are processed locally and not uploaded or stored in IndexedDB. The OCR tests serve those same assets locally for deterministic verification.
+4. Night means 22:00–06:00 in the browser timezone. It does not establish AFK play. Game timestamps without an offset do not establish a historical timezone when the device travels. Unknown strategy or mode groups may contain hidden variation.
+5. ROI-ranked purchase advice, a full simulator, cloud accounts/guild sync, automatic star/rarity inference and save-file decoding are outside the first milestone. Additional free structured fields remain available where the catalogue does not cover a system. No guessed game value fills a missing field.
+6. Run and Account backups remain separate and backward compatible. Run restore targets the matching active profile. New restores cannot overwrite another profile through a global record-ID collision. Imports and History context writes use atomic transactions and current-data revalidation.
 
-1. Open the existing Pages URL in the same browser/profile as before. Confirm Alpha 0.13.1 and that old Runs and Account records are still visible. Do not clear site data. Export both backup types.
-2. Import one old dated report; it should appear at its actual date, not at the top. Import it again with spacing or number decimal separator changed; it should be skipped. Confirm the newest real date stays first.
-3. Paste a 30-report text batch. Inspect the added/duplicate/invalid counts; reload and confirm the saved run count persists.
-4. Upload a known History screenshot. Check every suggested Tier/Wave/date/Coins/Cells match against the image before saving. Ambiguous rows should remain unresolved. Tournament-plus and Dissonance hints must not silently confirm modes.
-5. Record and edit one confirmed Account level. Both timeline entries should remain. Add one observed effect and one estimate with a source; neither should be counted as a confirmed level.
-6. Inspect the app beneath The Tower in 50/50 split-screen: tabs, input controls, Run cards, and collapsible analyses should remain usable without page-wide horizontal scrolling.
+## Phone acceptance checks — whenever convenient
+
+1. Open the existing Pages URL in the same browser/profile. Alpha 0.14.0 is also displayed in Diagnose when the short viewport hides the header badge. Existing Runs and Account records should remain present; export both backups before a broad acceptance session. Do not clear site data.
+2. Import one old dated report and then a spacing/decimal-separator variant. Check its actual position and the duplicate message. Paste a 30-report batch, reload, and inspect counts and dates.
+3. Upload the known History screenshot. Inspect Tier 5+ / Wave 360 and the purple-badge row; correct any uncertain fields, check the relevant rows and save. Check that existing report results and notes remain unchanged. A conflicting row must stay unapproved.
+4. Use the Account shortcuts to capture a screenshot or enter values. Record and edit a level; both timeline entries should remain. An observed effect and an estimate must not increase the confirmed-level count. Try a module/card/UW/relic entry and its source.
+5. Open the Account Intelligence analysis details after sufficient reports are available. Inspect comparable groups, date ranges, day/night rates, account context and the scope of each upgrade check. Empty states should explain the missing evidence.
+6. In 50/50 split-screen, test the bottom navigation, corrected History fields, Account shortcuts and collapsible analysis cards. Page-wide horizontal scrolling should not be necessary.
+
+## Source provenance
+
+The reference catalogue is derived from `TmRxJD/TheTowerSDK` at commit `6a6d3bc9101d68ad65b355122c6fe66af0a4610f`, inspected on 2026-10-17. The rebuild script refuses other revisions until the pin is explicitly reviewed. Attribution and MIT terms are in `THIRD_PARTY_LICENSES.md`. Public image provenance is in `tests/fixtures/SOURCES.md`; no private user image or actual account backup is committed.

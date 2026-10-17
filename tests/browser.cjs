@@ -24,8 +24,8 @@ const report=(day=17,wave=2632)=>`Battle Report\nBattle Date Oct ${day}, 2026 10
  await page.reload();await page.waitForSelector('#view h1');assert.equal(await page.evaluate(()=>state.entries.length),2);assert.equal(await page.evaluate(()=>state.runs.length),30);
  // Stub OCR engine output, exercise actual image input, matching UI and atomic save in Chromium.
  await tab('runs');await page.evaluate(()=>{window.Tesseract={createWorker:async()=>({recognize:async()=>({data:{text:'Tier 4 Wave 2633\nOct 16, 2026\nCoins: 274.31M\nCoins/Hour: 56.50M\nCells: 1.43K'}}),terminate:async()=>{}})};});
- await page.locator('#history-shot').setInputFiles({name:'history.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64')});
- const apply=page.getByRole('button',{name:'Geprüfte Zuordnungen übernehmen'});await apply.waitFor();assert.equal(await apply.isEnabled(),true);page.once('dialog',d=>d.accept());await apply.click();await page.getByText(/1 geprüfte History-Zuordnungen gespeichert/).waitFor();
+ await page.locator('#history-shot').setInputFiles({name:'history.jpg',mimeType:'image/jpeg',buffer:fs.readFileSync('tests/fixtures/history-compact.jpg')});
+ const apply=page.getByRole('button',{name:'Geprüfte Zuordnungen übernehmen'});await apply.waitFor();assert.equal(await apply.isEnabled(),false);await page.locator('[data-approved]').check();assert.equal(await apply.isEnabled(),true);page.once('dialog',d=>d.accept());await apply.click();await page.getByText(/1 geprüfte History-Zuordnungen gespeichert/).waitFor();
  assert.equal(await page.evaluate(()=>state.runs.find(r=>r.wave===2633).historySource),'screenshot-ocr');
  await tab('account');await page.screenshot({path:'/tmp/tower-account-verified.png',fullPage:true});await tab('runs');await page.screenshot({path:'/tmp/tower-runs-verified.png',fullPage:true});assert.deepEqual(errors,[]);
  console.log('Chromium passed: 3 mobile sizes × 6 tabs, 30-report import/reimport, reload persistence, historical sorting, date dialogs, append-only account edits, OCR-text matching/save UI.');
