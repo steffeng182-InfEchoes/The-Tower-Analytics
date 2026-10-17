@@ -10,7 +10,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden} .wrap,.card,.layout,.spac
 @media(max-height:440px) and (max-width:800px){.wrap{padding-bottom:55px}header{margin-bottom:5px}.navbottom b{display:none}.navbottom button{font-size:11px;padding:7px 2px}.navbottom{padding-bottom:calc(5px + env(safe-area-inset-bottom))}.stat .small{display:none}.chip{display:none}textarea{min-height:75px;max-height:22vh}}
 .run-cards{display:none}.run-card{padding:12px;border:1px solid #293a55;background:#142138;border-radius:12px;margin:8px 0}.run-card .metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}.run-card .metrics strong{display:block;font-size:15px;margin-top:3px}
 @media(max-width:620px){.run-table{display:none}.run-cards{display:block}}
-</style></head><body><main class="wrap"><header><div class="brand"><span class="mark">⬡</span><div><div class="eyebrow">Performance Lab</div><h1>TOWER ANALYTICS</h1></div></div><span class="chip">● Lokal · Alpha 0.11.5</span><button id="masterchat-link" type="button" title="Zum The Tower Masterchat wechseln" style="border:1px solid #45689b;border-radius:10px;background:#172d50;color:#f0f5ff;padding:9px 12px;font-weight:700">💬 Masterchat</button></header><section id="chat-settings" hidden style="position:fixed;inset:0;z-index:999;background:#071022e8;padding:16px;overflow:auto"><div style="max-width:520px;margin:12vh auto;background:#152540;border:1px solid #42618e;border-radius:16px;padding:18px"><h2>Masterchat verbinden</h2><p>Öffne den The-Tower-Masterchat in ChatGPT und kopiere seine private URL. Es wird kein öffentlicher Freigabelink benötigt.</p><label for="chat-url">ChatGPT-URL</label><input id="chat-url" type="url" autocomplete="off" placeholder="https://chatgpt.com/c/..." style="display:block;width:100%;margin:8px 0 12px;padding:12px;border-radius:8px;background:#0b1830;color:white;border:1px solid #6d8bb5"><p id="chat-status" style="color:#fbbf80" aria-live="polite"></p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="button" id="chat-save" type="button">Speichern &amp; Chat öffnen</button><button class="button" id="chat-open" type="button">Chat öffnen</button><button class="button" id="chat-cancel" type="button">Abbrechen</button></div></div></section><button id="chat-edit" type="button" title="Masterchat-Link bearbeiten" style="position:fixed;right:10px;bottom:85px;z-index:20;border:1px solid #46648c;border-radius:30px;background:#192b45;color:#fff;padding:7px 10px;font-size:12px">⚙ Chat-Link</button><div class="tabs" id="topnav"></div><section id="view"></section><p class="footer">Deine Runs werden ausschließlich in der IndexedDB dieses Browsers gespeichert. Daten können beim Löschen von Browserdaten verloren gehen – erstelle deshalb regelmäßig ein Backup. Kein Server, kein Tracking, keine automatische Synchronisation.</p></main><nav class="navbottom" id="bottomnav"></nav><script>
+</style></head><body><main class="wrap"><header><div class="brand"><span class="mark">⬡</span><div><div class="eyebrow">Performance Lab</div><h1>TOWER ANALYTICS</h1></div></div><span class="chip">● Lokal · Alpha 0.11.6</span><button id="masterchat-link" type="button" title="Zum The Tower Masterchat wechseln" style="border:1px solid #45689b;border-radius:10px;background:#172d50;color:#f0f5ff;padding:9px 12px;font-weight:700">💬 Masterchat</button></header><section id="chat-settings" hidden style="position:fixed;inset:0;z-index:999;background:#071022e8;padding:16px;overflow:auto"><div style="max-width:520px;margin:12vh auto;background:#152540;border:1px solid #42618e;border-radius:16px;padding:18px"><h2>Masterchat verbinden</h2><p>Öffne den The-Tower-Masterchat in ChatGPT und kopiere seine private URL. Es wird kein öffentlicher Freigabelink benötigt.</p><label for="chat-url">ChatGPT-URL</label><input id="chat-url" type="url" autocomplete="off" placeholder="https://chatgpt.com/c/..." style="display:block;width:100%;margin:8px 0 12px;padding:12px;border-radius:8px;background:#0b1830;color:white;border:1px solid #6d8bb5"><p id="chat-status" style="color:#fbbf80" aria-live="polite"></p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="button" id="chat-save" type="button">Speichern &amp; Chat öffnen</button><button class="button" id="chat-open" type="button">Chat öffnen</button><button class="button" id="chat-cancel" type="button">Abbrechen</button></div></div></section><button id="chat-edit" type="button" title="Masterchat-Link bearbeiten" style="position:fixed;right:10px;bottom:85px;z-index:20;border:1px solid #46648c;border-radius:30px;background:#192b45;color:#fff;padding:7px 10px;font-size:12px">⚙ Chat-Link</button><div class="tabs" id="topnav"></div><section id="view"></section><p class="footer">Deine Runs werden ausschließlich in der IndexedDB dieses Browsers gespeichert. Daten können beim Löschen von Browserdaten verloren gehen – erstelle deshalb regelmäßig ein Backup. Kein Server, kein Tracking, keine automatische Synchronisation.</p></main><nav class="navbottom" id="bottomnav"></nav><script>
 'use strict';
 const SECTIONS=['Records','Damage','Damage Taken','Bonus Health Gained','Health Regenerated','Damage Blocked','Utility','Counts','Enemies Hit By','Killed With Effect Active','Total Enemies','Coins','Cash','Currencies','Enemies Destroyed By'];
 const SUMMARY=['Battle Date','Game Time','Real Time','Tier','Wave','Killed By','Coins Earned','Coins Per Hour','Cells Earned','Cells Per Hour'];
@@ -236,6 +236,26 @@ function historyMetricMatches(actual,raw){
  // Rounded in-game compact quantities have limited precision.
  return Math.abs(Number(actual)-parsed)<=Math.max(1,parsed*.015);
 }
+function historyCandidateScore(row,run){
+ if(Number(run.tier)!==row.tier||Number(run.wave)!==row.wave)return null;
+ if(!historyDateMatches(run,row.dateRaw)||!historyMetricMatches(run.coinsEarned,row.coinsRaw)||!historyMetricMatches(run.cellsEarned,row.cellsRaw))return null;
+ let score=2,evidence=['Tier + Wave'];
+ if(row.dateRaw&&(run.battleDateRaw||run.playedAt)){score+=3;evidence.push('Datum');}
+ if(row.coinsRaw&&run.coinsEarned!=null){score+=2;evidence.push('Coins');}
+ if(row.cellsRaw&&run.cellsEarned!=null){score+=2;evidence.push('Cells');}
+ return {run,score,evidence};
+}
+function matchHistoryRows(rows,runs){
+ const reserved=new Set();
+ return rows.map((row,index)=>{
+  const choices=runs.map(run=>historyCandidateScore(row,run)).filter(Boolean).sort((a,b)=>b.score-a.score);
+  const top=choices[0],second=choices[1];
+  // Unique, adequately supported matches only. A Tier/Wave-only match is too weak.
+  const safe=top&&top.score>=4&&(!second||top.score>second.score)&&!reserved.has(top.run.id);
+  const run=safe?top.run:null;if(run)reserved.add(run.id);
+  return {...row,index,run,candidates:choices.length,score:top?.score||0,evidence:top?.evidence||[]};
+ });
+}
 function bindHistoryImport(){
  const input=document.querySelector('#history-shot'),target=document.querySelector('#history-match');if(!input||!target)return;
  input.onchange=async()=>{
@@ -245,11 +265,10 @@ function bindHistoryImport(){
   try{for(const file of files){if(!file.type.startsWith('image/'))continue;const recognized=await historyOCR(file);all.push(...historyRows(recognized));}
   }catch(e){heading.textContent='Erkennung fehlgeschlagen: '+String(e.message||e);return;}
   if(!all.length){heading.textContent='Tier/Wave konnten nicht zuverlässig ausgelesen werden. Bitte einen History-Screenshot hier im Chat zeigen, damit wir das Layout anpassen können.';return;}
-  const reserved=new Set();const found=all.map((row,index)=>{const eligible=state.runs.filter(run=>Number(run.tier)===row.tier&&Number(run.wave)===row.wave&&historyDateMatches(run,row.dateRaw)&&historyMetricMatches(run.coinsEarned,row.coinsRaw)&&historyMetricMatches(run.cellsEarned,row.cellsRaw)&&!reserved.has(run.id));
-   const run=eligible.length===1?eligible[0]:null;if(run)reserved.add(run.id);return {...row,index,run,candidates:eligible.length};});
+  const found=matchHistoryRows(all,state.runs);
   heading.textContent=found.length+' History-Zeilen erkannt; '+found.filter(x=>x.run).length+' eindeutig nach Tier, Wave und verfügbaren Zusatzwerten zuordenbar. Nur eindeutige Treffer können übernommen werden.';
   const list=document.createElement('div');
-  found.forEach(x=>{const p=document.createElement('p');p.className='small';p.textContent=(x.index+1)+'. T'+x.tier+' / Wave '+x.wave+(x.dateRaw?' · '+x.dateRaw:'')+(x.modeHint==='tournament-candidate'?' · Turnierkandidat':'')+' — '+(x.run?'passender Report':'kein eindeutiger Treffer ('+x.candidates+')');list.appendChild(p);});
+  found.forEach(x=>{const p=document.createElement('p');p.className='small';p.textContent=(x.index+1)+'. T'+x.tier+' / Wave '+x.wave+(x.dateRaw?' · '+x.dateRaw:'')+(x.modeHint==='tournament-candidate'?' · Turnierkandidat':'')+' — '+(x.run?'Eindeutiger Treffer · '+x.evidence.join(', '):'Nicht sicher zugeordnet ('+x.candidates+' Kandidaten)');list.appendChild(p);});
   target.appendChild(list);
   const button=document.createElement('button');button.className='button primary';button.textContent='Eindeutige Zuordnungen übernehmen';button.disabled=!found.some(x=>x.run);target.appendChild(button);
   button.onclick=async()=>{if(!confirm('Die erkannten Positionen der History als Reihenfolge speichern? Bestehende Run-Daten und echte Zeitstempel bleiben erhalten.'))return;
