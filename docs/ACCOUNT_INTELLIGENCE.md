@@ -1,4 +1,4 @@
-# Account Intelligence — stable intermediate release 0.13.0
+# Account Intelligence — stable intermediate release 0.13.1
 
 The complete milestone is **not finished**. This release hardens the existing import and local data workflows and adds a test foundation. It is suitable for the user checks below, subject to the stated OCR limitations.
 
@@ -44,7 +44,7 @@ The inherited catalogue contains source URLs and prior claimed limits/check date
 
 ## User checks on Samsung S24 Ultra
 
-1. Open the existing Pages URL in the same browser/profile as before. Confirm Alpha 0.13.0 and that old Runs and Account records are still visible. Do not clear site data. Export both backup types.
+1. Open the existing Pages URL in the same browser/profile as before. Confirm Alpha 0.13.1 and that old Runs and Account records are still visible. Do not clear site data. Export both backup types.
 2. Import one old dated report; it should appear at its actual date, not at the top. Import it again with spacing or number decimal separator changed; it should be skipped. Confirm the newest real date stays first.
 3. Paste a 30-report text batch. Inspect the added/duplicate/invalid counts; reload and confirm the saved run count persists.
 4. Upload a known History screenshot. Check every suggested Tier/Wave/date/Coins/Cells match against the image before saving. Ambiguous rows should remain unresolved. Tournament-plus and Dissonance hints must not silently confirm modes.

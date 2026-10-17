@@ -1,4 +1,4 @@
-# Tower Analytics · Alpha 0.13.0
+# Tower Analytics · Alpha 0.13.1
 
 Single-file, mobile-first analytics app for The Tower. Production entry point: `index.html`. Runtime data stays in the existing IndexedDB `tower-analytics-alpha`, version 2. No build step, login, Supabase, or cloud data upload is introduced.
 
