@@ -52,7 +52,7 @@ function setupMasterchatLink(){
  const status=document.getElementById('chat-status');
  const key='tower-analytics-masterchat-url';
  if(!button||!panel||!input)return;
- function valid(value){try{const u=new URL(value.trim());return u.protocol==='https:'&&['chatgpt.com','www.chatgpt.com'].includes(u.hostname)&&(/\\/c\\//.test(u.pathname)||/\\/g\\/.+\\/c\\//.test(u.pathname))?u.href:null;}catch{return null;}}
+ function valid(value){try{const u=new URL(value.trim());return u.protocol==='https:'&&['chatgpt.com','www.chatgpt.com'].includes(u.hostname)&&u.pathname.includes('/c/')?u.href:null;}catch{return null;}}
  function saved(){try{return localStorage.getItem(key)||'';}catch{return '';}}
  function show(){input.value=saved();status.textContent='';panel.hidden=false;input.focus();}
  button.addEventListener('click',()=>{
