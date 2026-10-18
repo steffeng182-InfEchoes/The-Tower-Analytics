@@ -19,5 +19,14 @@ const {chromium}=require('playwright'),{createWorker}=require('tesseract.js');
    if(sample.private){assert.equal(rows[0].visualMode,'tournament');assert.equal(rows[5].visualMode,'dissonance');assert.equal(rows.slice(1,5).some(r=>r.visualMode),false);}
    console.log('Actual OCR passed:',sample.private?'private screenshot (not persisted)':sample.file,rows.length,'rows');
   }
+  for(const sample of [{file:'tests/fixtures/account-labs.jpg',kind:'labs'},{file:'tests/fixtures/account-workshop.jpg',kind:'workshop'}]){
+   const bytes=fs.readFileSync(sample.file),input=bytes.toString('base64');const clean=await page.evaluate(async input=>{const prepared=await prepareOCRImage(await(await fetch('data:image/jpeg;base64,'+input)).blob());return {png:prepared.canvas.toDataURL('image/png'),width:prepared.width,scale:prepared.scale};},input);
+   const raw=lean((await worker.recognize(bytes)).data),processed=lean((await worker.recognize(Buffer.from(clean.png.split(',')[1],'base64'))).data);
+   const rows=await page.evaluate(({raw,processed,clean})=>accountCandidatesFromRecognition({passes:[{...raw,scale:1},{...processed,scale:clean.scale}],prepared:clean}),{raw,processed,clean});
+   if(sample.kind==='labs'){const speed=rows.find(r=>r.name==='Game Speed');assert.ok(speed);assert.equal(speed.valueType,'observed');assert.equal(speed.researchTargetLevel,7);}
+   else {assert.ok(rows.length>=8);for(const [name,value,cost,max] of [['Orb Speed','6.30','', 'max'],['Knockback Chance','30.00%','7.44K','unknown'],['Lifesteal','4.11%','40.09K','unknown'],['Defense Absolute','17.63','124K','unknown']]){const r=rows.find(r=>r.name===name);assert.ok(r,name);assert.equal(r.value,value,name);assert.equal(r.upgradeCostRaw,cost,name);assert.equal(r.maxStatus,max,name);}assert.equal(rows.every(r=>r.valueType==='observed'),true);assert.equal(rows.some(r=>r.name==='Death Defy'),false,'locked upgrade is not owned');}
+   console.log('Actual Account OCR passed:',sample.file,rows.length,'editable proposals; no invented workshop level.');
+  }
+
  }finally{if(worker)await worker.terminate();await browser.close();fs.rmSync(cache,{recursive:true,force:true});}
 })().catch(e=>{console.error(e);process.exitCode=1;});

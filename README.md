@@ -1,3 +1,7 @@
+## Alpha 0.15.0 · Import-Finalisierung
+
+Ein-Klick-Reportimport, geprüfte History vor/nach Report, getrennte Strategie/Modi und echte Account-OCR. [Änderungen, Tests, Grenzen und Android-Abnahme](docs/IMPORT_FINALIZATION.md).
+
 # Tower Analytics · Alpha 0.14.0
 
 Single-file, mobile-first Account Intelligence for The Tower. `index.html` is the deployable app, with no build step. Existing data stays in IndexedDB `tower-analytics-alpha`, version 2. No Supabase, login or data upload is introduced.
