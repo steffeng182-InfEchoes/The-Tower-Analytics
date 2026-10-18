@@ -1,4 +1,6 @@
-# Account Intelligence — Alpha 0.14.0
+# Account Intelligence — Alpha 0.15.0
+
+**Aktueller Nachtrag:** [Import-Finalisierung und Android-Abnahme](IMPORT_FINALIZATION.md). Die folgenden Alpha-0.14-Grundlagen werden durch diesen Nachtrag ergänzt und dort korrigiert, insbesondere History zuerst, Ein-Klick-Import und reale Account-OCR.
 
 **Status: first milestone implemented and technically ready for acceptance testing.** The eight technical acceptance paths are covered below. This is an Alpha release, not a claim that every future game version or screenshot layout is recognised without error.
 
@@ -38,7 +40,7 @@ Technical test readiness is distinct from the owner's final acceptance on the ph
 
 ## Phone acceptance checks — whenever convenient
 
-1. Open the existing Pages URL in the same browser/profile. Alpha 0.14.0 is also displayed in Diagnose when the short viewport hides the header badge. Existing Runs and Account records should remain present; export both backups before a broad acceptance session. Do not clear site data.
+1. Open the existing Pages URL in the same browser/profile. Alpha 0.15.0 is also displayed in Diagnose when the short viewport hides the header badge. Existing Runs and Account records should remain present; export both backups before a broad acceptance session. Do not clear site data.
 2. Import one old dated report and then a spacing/decimal-separator variant. Check its actual position and the duplicate message. Paste a 30-report batch, reload, and inspect counts and dates.
 3. Upload the known History screenshot. Inspect Tier 5+ / Wave 360 and the purple-badge row; correct any uncertain fields, check the relevant rows and save. Check that existing report results and notes remain unchanged. A conflicting row must stay unapproved.
 4. Use the Account shortcuts to capture a screenshot or enter values. Record and edit a level; both timeline entries should remain. An observed effect and an estimate must not increase the confirmed-level count. Try a module/card/UW/relic entry and its source.
