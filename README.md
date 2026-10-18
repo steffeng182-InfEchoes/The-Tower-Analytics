@@ -1,3 +1,7 @@
+## Alpha 0.15.1 · stabile Farming-Auswahl
+
+Tournament/Dissonanz direkt am Tier, zentrale Normalrun-Auswahl für alle Farming-Auswertungen, transparente unbekannte Modi und schreibfreie Altdaten-Kompatibilität. Workshop-OCR zurückgestellt. [Regeln, Tests und Abnahme](docs/FARMING_MODE_STABILITY.md).
+
 ## Alpha 0.15.0 · Import-Finalisierung
 
 Ein-Klick-Reportimport, geprüfte History vor/nach Report, getrennte Strategie/Modi und echte Account-OCR. [Änderungen, Tests, Grenzen und Android-Abnahme](docs/IMPORT_FINALIZATION.md).
