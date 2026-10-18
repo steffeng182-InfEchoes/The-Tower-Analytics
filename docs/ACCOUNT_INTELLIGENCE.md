@@ -1,3 +1,7 @@
+# Aktueller Stand Alpha 0.15.1
+
+Maßgeblich für die aktuelle Abnahme: [Run-Modi und Farming stabilisiert](FARMING_MODE_STABILITY.md). Workshop-OCR ist zurückgestellt und blockiert diesen Meilenstein nicht mehr. Unbekannte und Sondermodi sind aus normalem Farming ausgeschlossen. Die älteren Beschreibungen unten dokumentieren die vorausgegangenen Entwicklungsabschnitte.
+
 # Account Intelligence — Alpha 0.15.0
 
 **Aktueller Nachtrag:** [Import-Finalisierung und Android-Abnahme](IMPORT_FINALIZATION.md). Die folgenden Alpha-0.14-Grundlagen werden durch diesen Nachtrag ergänzt und dort korrigiert, insbesondere History zuerst, Ein-Klick-Import und reale Account-OCR.
