@@ -1,0 +1,67 @@
+{
+  "sourceRevision": "da361120e28de87b33ffc340d25962b966dc6150",
+  "sourceRepository": "AngryBrit/tower-smith",
+  "license": "CC BY-NC-SA 4.0; game art Tech Tree Games",
+  "images": [
+    {
+      "file": "relic_Pulse_1.webp",
+      "sourcePath": "public/relics/rare/relic_Pulse_1.webp",
+      "gitBlobSha": "8dad3a936cde69a1ee31cb2e91e85fc061c8ad57"
+    },
+    {
+      "file": "relic_fallingApple.webp",
+      "sourcePath": "public/relics/rare/relic_fallingApple.webp",
+      "gitBlobSha": "2ccb4c154af4ac97b80df2c20cbbc1a86075b553"
+    },
+    {
+      "file": "relic_Flux_1.webp",
+      "sourcePath": "public/relics/rare/relic_Flux_1.webp",
+      "gitBlobSha": "c373fcdf9f0f1f39dde88653c1ae45b8d0eca9f5"
+    },
+    {
+      "file": "relic_cropCircle.webp",
+      "sourcePath": "public/relics/epic/relic_cropCircle.webp",
+      "gitBlobSha": "1323017b77ef1188720f6c1c167db7a394f94b46"
+    },
+    {
+      "file": "relic_Aether_1.webp",
+      "sourcePath": "public/relics/epic/relic_Aether_1.webp",
+      "gitBlobSha": "2c7514d7345b2b42618b9ce33daf23cb620293ae"
+    },
+    {
+      "file": "relic_Lumin_1.webp",
+      "sourcePath": "public/relics/rare/relic_Lumin_1.webp",
+      "gitBlobSha": "b4bd37d6dd4717ade969ba9ac3af8fdaa7363d34"
+    },
+    {
+      "file": "relic_hauntedMirror.webp",
+      "sourcePath": "public/relics/rare/relic_hauntedMirror.webp",
+      "gitBlobSha": "d3bda1ff969e1b9c56d2fd8d49b7bd1939cc31fe"
+    },
+    {
+      "file": "relic_Ether_1.webp",
+      "sourcePath": "public/relics/rare/relic_Ether_1.webp",
+      "gitBlobSha": "6560ae101ded67f59305c7cba38f2fc84bf8ee4d"
+    },
+    {
+      "file": "relic_doWhileTrue.webp",
+      "sourcePath": "public/relics/epic/relic_doWhileTrue.webp",
+      "gitBlobSha": "72f928a73198b42be5ac7a9a1efd9022591240d8"
+    },
+    {
+      "file": "relic_Harmonic_1.webp",
+      "sourcePath": "public/relics/rare/relic_Harmonic_1.webp",
+      "gitBlobSha": "aaf3947f3379ccc37e2c228506d440a6fcb40215"
+    },
+    {
+      "file": "relic_Fusion_1.webp",
+      "sourcePath": "public/relics/epic/relic_Fusion_1.webp",
+      "gitBlobSha": "c8b9d30364e381194950536ad252cb484b6fa0e1"
+    },
+    {
+      "file": "relic_threeBodySolution.webp",
+      "sourcePath": "public/relics/epic/relic_threeBodySolution.webp",
+      "gitBlobSha": "166fb1e52214ed753533f46cb017bac49821abc8"
+    }
+  ]
+}
