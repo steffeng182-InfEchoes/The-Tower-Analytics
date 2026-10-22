@@ -14,7 +14,13 @@ Seven lab formulas are supported: Lab Speed, Attack Speed, Coins/Kill (1+.02L), 
 
 ## B — Relics
 
-Pending implementation after the successful Labs acceptance above.
+Implemented and complete pipeline passed on commit `1f838430`, CI run [39833283155](https://github.com/steffeng182-InfEchoes/The-Tower-Analytics/actions/runs/39833283155).
+
+Real public multi-relic shop screenshot: Falling Apple, Haunted Mirror, 3 Body Solution and Crop Circle were recognized by actual Tesseract Worker/WASM. Ownership stayed unknown until explicitly selected. Separate reconstructed name lists and a symbol-only raster made from real Flux/Lumin/Pulse art passed batch ownership confirmation, persisted after reload, fed the same bonus engine, and did not double-count overlapping imports. Unknown visual cells, blank screenshots and damaged images did not change stored entries. Final Labs/Relics backup restored in a genuinely fresh browser database and survived reload.
+
+Twelve pinned visual references are maintained in `account/relic-vision.js`; see THIRD_PARTY_LICENSES.md. Symbol screenshots need an explicitly selected, square-cell grid crop. Matching checks absolute similarity, best/runner-up error ratio and margin; every match remains an unchecked proposal. Unmatched symbols can be manually assigned or left unresolved. This does not claim automatic segmentation or recognition of the complete game relic collection. Different device scaling/backgrounds and physical Android symbol layouts still need broader real-image testing.
+
+Relic percent aggregation supports Coins, Health, Damage, Orb Speed, Lab Speed, Attack Speed and Critical Factor. Same-type relic percentages sum before multiplication with the corresponding supported lab factor. Coins/Kill lab is displayed separately from the broad Coins relic factor, without claiming a full yield model. Orb Speed lab flat additions and relic percentages remain separate because the workshop base and other modifiers are unknown. Unsupported types (e.g. Wall Rebuild seconds, Super Critical Chance) remain explicitly unknown; the engine never applies a guessed generic formula to them. Sources are the pinned SDK data and the cited Relics stacking description. Nine core tests plus all existing browser/OCR/data tests passed.
 
 ## C — Other systems
 

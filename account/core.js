@@ -27,7 +27,7 @@
   const proposals=[];
   for(let a=0;a<anchors.length;a++){
    const row=anchors[a],end=Math.min(anchors[a+1]?.i??lines.length,row.i+5),region=lines.slice(row.i,end).join(' '),tail=region.slice(row.end),explicit=tail.match(/\b(?:lv[l]?|level|stufe)\.?\s*[:#]?\s*(\d{1,3})(?:\s*\/\s*(\d{1,3}))?/i);
-   const running=/\b(?:rush|researching|remaining|in progress|erforscht gerade|verbleibend)\b/i.test(region),locked=/\b(?:locked|not owned|unowned|gesperrt|nicht im besitz)\b/i.test(region);
+   const running=/select research|research selection|forschung auswählen/i.test(text)||/\b(?:rush|researching|remaining|in progress|erforscht gerade|verbleibend)\b/i.test(region),locked=/\b(?:locked|not owned|unowned|gesperrt|nicht im besitz)\b/i.test(region);
    const effect=tail.match(/(?:x|×)\s*\d+(?:[.,]\d+)?|[+]\s*\d+(?:[.,]\d+)?\s*%?|\d+(?:[.,]\d+)\s*%/i)?.[0]||'';
    if(category==='Labs'&&!explicit&&!effect)continue;
    proposals.push({knowledgeId:row.k.id,name:row.k.name,category,level:explicit&&!running?Number(explicit[1]):null,targetLevel:explicit&&running?Number(explicit[1]):null,maxLevel:row.k.maxLevel??null,visibleMax:explicit?.[2]?Number(explicit[2]):null,effectRaw:effect,researchStatus:running?'running':/\bmax(?:ed)?\b/i.test(region)?'max':'unknown',owned:category==='Relics'?locked?false:null:undefined,sourceText:region.slice(0,500),confirmationStatus:'pending'});
