@@ -28,3 +28,8 @@ SOFTWARE.
 
 This project includes work derived from other open source projects.
 See NOTICE for their copyright and license terms.
+
+
+## Relic visual reference collection (Account Intelligence 2)
+
+The twelve manually curated name-to-image references in `account/relic-vision.js` point to original game art hosted in [AngryBrit/tower-smith](https://github.com/AngryBrit/tower-smith/tree/da361120e28de87b33ffc340d25962b966dc6150/public/relics), pinned at `da361120e28de87b33ffc340d25962b966dc6150`. Mapping attribution: AngryBrit / TowerSmith, [CC BY-NC-SA 4.0](https://github.com/AngryBrit/tower-smith/blob/da361120e28de87b33ffc340d25962b966dc6150/LICENCE). Game artwork belongs to Tech Tree Games. This limited reference collection is attributed under that licence; the matching algorithm and UI were independently implemented here. No TowerSmith application code is copied. Image files are loaded only when the user requests visual matching; screenshots are processed on-device. CI evidence includes downloaded source reference images and reconstructed raster layouts for reproducibility, with the same attribution.
