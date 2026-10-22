@@ -1,6 +1,6 @@
 'use strict';
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),http=require('node:http');
-const {run:rls}=require('./test-rls.cjs');
+const {run:rls}=require('./test-rls.cjs');const {health}=require('./cloud-health.cjs');
 const sandbox={window:{}};vm.runInNewContext(fs.readFileSync('guild/config.js','utf8'),sandbox);const config=sandbox.window.TOWER_CLOUD_CONFIG;
 if(config.url!=='https://tzgbsiwchzrkvntcnikx.supabase.co')throw Error('Wrong Tower project');
 const mask=value=>{if(value)console.log('::add-mask::'+value);};
@@ -18,7 +18,7 @@ const report=(wave=2632,mode='Normal')=>`Battle Report\nBattle Date Oct 17, 2026
   process.env.TOWER_SUPABASE_URL=config.url;process.env.TOWER_SUPABASE_PUBLISHABLE_KEY=config.publishableKey;
   for(const [index,label] of ['A','B'].entries()){process.env['TOWER_TEST_'+label+'_EMAIL']=users[index].email;process.env['TOWER_TEST_'+label+'_PASSWORD']=users[index].password;}
   await rls();
-  console.log('Hosted API: two independent authenticated accounts passed real RLS.');
+  console.log('Hosted API: two independent authenticated accounts passed real RLS.');await health({url:config.url,key:config.publishableKey});console.log('Hosted public RLS health RPC passed.');
   server=http.createServer((req,res)=>{const name=new URL(req.url,'http://localhost').pathname,file=name==='/'?'index.html':name.slice(1);if(file!=='index.html'&&file!=='guild-worker.js'&&!/^guild\/[a-z0-9]+\.js$/.test(file)){res.writeHead(404);return res.end();}res.setHeader('Content-Type',file.endsWith('.js')?'application/javascript':'text/html');res.end(fs.readFileSync(file));});await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
   browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:384,height:400}}),page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.addInitScript(()=>localStorage.setItem('tower-language',localStorage.getItem('tower-language')||'de'));
@@ -28,7 +28,7 @@ const report=(wave=2632,mode='Normal')=>`Battle Report\nBattle Date Oct 17, 2026
   await login(users[0]);assert.equal(await page.evaluate(()=>state.runs.length),0);
   await importRun(report());await importRun(report(2633,'Tournament'));await page.evaluate(()=>TowerGuild.sync());await page.evaluate(()=>TowerGuild.sync());assert.equal(await page.evaluate(()=>state.runs.length),2);assert.equal(await page.evaluate(()=>aggregateRuns(state.runs).count),1);
   await page.evaluate(()=>navigator.serviceWorker.ready);await page.waitForFunction(()=>!!navigator.serviceWorker.controller);await context.setOffline(true);await importRun(report(2634));await page.reload();await page.waitForSelector('#view h1');assert.equal(await page.evaluate(()=>state.runs.length),3);
-  const reconnect=page.waitForNavigation({waitUntil:'load'});await context.setOffline(false);await reconnect;await page.waitForSelector('#view h1');await page.evaluate(()=>TowerGuild.sync());
+  await context.setOffline(false);await page.waitForFunction(()=>window.TowerGuild?.canSync&&!!document.querySelector('#view h1'));await page.evaluate(()=>TowerGuild.sync());
   await tab('account');await page.locator('#guild-logout').click();await page.waitForFunction(()=>window.TowerGuild?.scope==='guest'&&!!document.querySelector('#view h1'));assert.equal(await page.evaluate(()=>state.runs.length),0);
   await login(users[1]);assert.equal(await page.evaluate(()=>state.runs.length),0);await importRun(report());await page.evaluate(()=>TowerGuild.sync());await page.reload();await page.waitForSelector('#view h1');assert.equal(await page.evaluate(()=>state.runs.length),1);
   await tab('account');await page.locator('#guild-language').selectOption('en');await page.evaluate(()=>TowerGuild.sync());await page.reload();await page.waitForSelector('#view h1');assert.equal(await page.locator('html').getAttribute('lang'),'en');

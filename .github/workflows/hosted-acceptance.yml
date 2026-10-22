@@ -22,3 +22,5 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Real hosted Auth, RLS, API, browser, offline and account-switch acceptance
         run: node scripts/hosted-acceptance.cjs
+      - name: Public database health under its restricted RLS policy
+        run: node scripts/cloud-health.cjs

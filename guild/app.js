@@ -123,5 +123,5 @@
   };
  }
  function locked(){try{const value=JSON.parse(get('tower-sync-lock:'+owner)||'null');return !!value&&value.until>Date.now();}catch{return true;}}
- const api={init,bind,databaseName,render,sync,get locked(){return locked();},get changing(){return changing;},get scope(){return scope;},get busy(){return busy;},get owner(){return owner;}};root.TowerGuild=api;
+ const api={init,bind,databaseName,render,sync,get canSync(){return !!client&&!!owner&&navigator.onLine&&!changing;},get locked(){return locked();},get changing(){return changing;},get scope(){return scope;},get busy(){return busy;},get owner(){return owner;}};root.TowerGuild=api;
 })(window);

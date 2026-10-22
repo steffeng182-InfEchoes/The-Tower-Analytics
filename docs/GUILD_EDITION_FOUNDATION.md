@@ -4,7 +4,7 @@
 
 ## Scope
 1. Create a **separate** Supabase project for Tower Analytics.
-2. Apply and test `supabase/migrations/20261018_guild_foundation.sql`.
+2. Apply and test `supabase/migrations/20261022082239_guild_foundation.sql`.
 3. Supabase Auth using email magic link / OTP, with GitHub Pages redirect URLs allowlisted.
 4. Each signed-in player sees only their own runs. RLS must be tested with TWO accounts (cross-user read, insert, update and delete all denied).
 5. Keep the existing IndexedDB data readable offline. Migration requires explicit consent and JSON backup; upsert cloud runs by `(user_id, client_run_id)`, verify counts/hashes and support retry without duplication.
@@ -21,3 +21,4 @@
 - Language switches DE/EN; first owner's browser continues in DE.
 - Keep-alive task health failures visible.
 - Mobile 50/50 split-screen works.
+
