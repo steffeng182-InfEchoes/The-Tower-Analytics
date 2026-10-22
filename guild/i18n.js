@@ -11,6 +11,10 @@
  };
  let language='de';try{language=localStorage.getItem('tower-language')||'de';}catch{}
  if(!['de','en'].includes(language))language='de';
+ messages.loginCode=['E-Mail-Code oder Bestätigungslink','Email code or confirmation link'];
+ messages.verifyCode=['Anmeldung bestätigen','Confirm sign-in'];
+ messages.codeHelp=['Du kannst den Einmalcode oder den vollständigen Bestätigungslink aus deiner E-Mail hier einfügen. Der Link lässt sich so auch ohne Browserwechsel bestätigen.','Paste the one-time code or the complete confirmation link from your email. This also confirms a link without switching browsers.'];
+ messages.invalidLoginCode=['Dieser Anmeldelink oder Code ist ungültig oder abgelaufen. Bitte eine neue E-Mail anfordern.','This sign-in link or code is invalid or expired. Request a new email.'];
  messages.syncUnsupported=['Dieser Browser unterstützt keine sichere parallele Synchronisierung. Bitte aktuelles Chrome über HTTPS verwenden. Lokale Daten bleiben erhalten.','This browser cannot safely coordinate synchronization. Use current Chrome over HTTPS. Local data is preserved.'];
  messages.farmingScope=['Farming: {normal} von {total} Runs. Nicht berücksichtigt: {tournament} Tournament · {dissonance} Dissonanz · {unknown} Modus unbekannt / widersprüchlich. Unvollständige Normalruns: {invalid}. Unbekannte Modi unter „Strategie / Modus“ prüfen; Tages-/Nachtstrategie bestätigt keinen Normalmodus.','Farming: {normal} of {total} runs. Excluded: {tournament} Tournament · {dissonance} Dissonance · {unknown} unknown / conflicting mode. Incomplete normal runs: {invalid}. Review unknown modes under “Strategy / mode”; day/night strategy does not confirm normal mode.'];
  Object.assign(legacy,{'Run-Strategie':'Run strategy','Dissonanz-Art (nur bei Dissonanz)':'Dissonance type (Dissonance only)','Modus unbekannt':'Unknown mode','Modus widersprüchlich':'Conflicting mode','Kontext bestätigen':'Confirm context','Tag / aktiv':'Day / active','Nacht / AFK':'Night / AFK','manuell bestätigt':'manually confirmed','automatisch aus Report':'detected from report','unbekannt':'unknown','Datum unbekannt':'Unknown date','gewichtet':'weighted'});

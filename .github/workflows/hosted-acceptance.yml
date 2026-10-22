@@ -1,0 +1,24 @@
+name: Hosted Tower beta acceptance
+on:
+  push:
+    branches: [feature/guild-supabase-foundation]
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: hosted-tower-acceptance
+  cancel-in-progress: false
+jobs:
+  hosted-beta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Real hosted Auth, RLS, API, browser, offline and account-switch acceptance
+        run: node scripts/hosted-acceptance.cjs

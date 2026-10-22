@@ -1,7 +1,7 @@
 'use strict';
 // Bump this version whenever deploying changed app/config files. Install atomically;
 // activate after the old app's tabs close. Never cache Auth/API/CDN responses.
-const CACHE='tower-guild-shell-v1';
+const CACHE='tower-guild-shell-v2';
 const FILES=['./','./index.html','./guild/config.js','./guild/client.js','./guild/sync.js','./guild/i18n.js','./guild/backup.js','./guild/app.js'];
 const ROOT=new URL('./',self.location.href);
 const URLS=FILES.map(path=>new URL(path,ROOT).href);
