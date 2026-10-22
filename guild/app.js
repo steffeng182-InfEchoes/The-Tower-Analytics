@@ -1,7 +1,7 @@
 (function(root){
  'use strict';
  const I=root.TowerI18n,S=root.TowerSync,t=k=>I.t(k);
- let client=null,session=null,owner=null,bridge=null,scope='legacy',busy=false,status='',manifest={base:{},conflicts:{}},backupReady=false;
+ let client=null,session=null,owner=null,bridge=null,scope='legacy',busy=false,changing=false,status='',manifest={base:{},conflicts:{}},backupReady=false;
  const stores=['profiles','runs','accountEntries'];
  const read=(db,store)=>new Promise((ok,no)=>{const tx=db.transaction(store),req=tx.objectStore(store).getAll();req.onsuccess=()=>ok(req.result);req.onerror=()=>no(req.error);});
  const write=(db,store,data)=>new Promise((ok,no)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).put(data);tx.oncomplete=ok;tx.onerror=()=>no(tx.error);tx.onabort=()=>no(tx.error||Error('changed'));});
@@ -9,7 +9,7 @@
  function get(key){try{return localStorage.getItem(key);}catch{return null;}}
  function set(key,value){localStorage.setItem(key,value);}
  function mask(){document.querySelector('#view')?.replaceChildren();bridge?.clear();}
- function scopeChange(id){mask();set('tower-guild-mode','isolated');if(id)set('tower-guild-owner',id);else localStorage.removeItem('tower-guild-owner');location.reload();}
+ function scopeChange(id){changing=true;mask();set('tower-guild-mode','isolated');if(id)set('tower-guild-owner',id);else localStorage.removeItem('tower-guild-owner');location.reload();}
  function errorMessage(e){if(['cloudConfig','backupRequired','sessionExpired','changed','localDuplicate'].includes(e?.message))return t(e.message);if(e?.status===401||e?.code==='PGRST301')return t('sessionExpired');if(e?.name==='TypeError'||e?.name==='TimeoutError')return t('network');return t('cloudError');}
  async function perform(fn){if(busy||locked())return;busy=true;status=t('busy');render();try{await fn();}catch(e){status=errorMessage(e);}finally{busy=false;render();}}
  async function init(){
@@ -34,18 +34,19 @@
   return databaseName();
  }
  function databaseName(){return scope==='legacy'?'tower-analytics-alpha':scope==='account'?'tower-analytics-guild-'+owner:'tower-analytics-guild-signed-out';}
- function bind(appBridge){bridge=appBridge;render();}
+ async function bind(appBridge){bridge=appBridge;manifest=await getManifest();render();}
  function escape(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
  function button(id,key){return '<button class="button" id="'+id+'" '+(busy?'disabled':'')+'>'+t(key)+'</button>';}
  function render(){
-  if(!bridge)return;let panel=document.querySelector('#guild-panel');if(!panel){panel=document.createElement('section');panel.id='guild-panel';panel.className='card section';document.querySelector('#topnav').before(panel);}
+  if(!bridge)return;const footer=document.querySelector('main>.footer');if(footer)footer.textContent=t('deviceOnly');let panel=document.querySelector('#guild-panel');if(!panel){panel=document.createElement('section');panel.id='guild-panel';panel.className='card section';document.querySelector('#topnav').before(panel);}
+  const slot=document.querySelector('#guild-slot');if(slot){slot.appendChild(panel);panel.hidden=false;}else{document.querySelector('#view').after(panel);panel.hidden=true;}
   const signed=!!owner;const text=t(scope==='legacy'?'local':scope==='account'?'cloud':'guest');
-  const wasOpen=panel.querySelector('details')?.open||!get('tower-language');
+  const wasOpen=panel.querySelector('details')?.open||!!slot||!get('tower-language');
   panel.innerHTML='<details '+(wasOpen?'open':'')+'><summary>'+t('guild')+' · '+escape(text)+'</summary><label for="guild-language">'+t('language')+'</label><select id="guild-language"><option value="de">Deutsch</option><option value="en">English</option></select><p class="small">'+t(navigator.onLine?'online':'offline')+'</p>'+(client?(signed?'<p data-user-content>'+escape(session?.user?.email||owner)+'</p><div class="buttonrow">'+button('guild-logout','logout')+button('guild-sync','sync')+button('guild-migration','migrate')+'</div><label for="guild-name">'+t('profile')+'</label><input id="guild-name" maxlength="60" autocomplete="nickname"><div class="buttonrow">'+button('guild-profile','saveProfile')+'</div>':'<form id="guild-login"><label for="guild-email">'+t('email')+'</label><input id="guild-email" type="email" autocomplete="email" required><label class="review-check"><input id="guild-register" type="checkbox">'+t('register')+'</label><button class="button primary" '+(busy?'disabled':'')+'>'+t('send')+'</button></form>'):'<p>'+t('notConfigured')+'</p>')+'<div class="buttonrow">'+button('guild-backup','backup')+(scope==='guest'?button('guild-local','openLocal'):'')+'</div><label for="guild-restore">'+(I.language==='de'?'Vollständiges Backup wiederherstellen':'Restore full backup')+'</label><input id="guild-restore" type="file" accept=".json,application/json"><div id="guild-migration-area"></div><p id="guild-status" role="status" aria-live="polite">'+escape(status)+'</p>'+(Object.keys(manifest.conflicts).length?'<div class="notice warn">'+t('conflicts')+' '+Object.keys(manifest.conflicts).length+'</div>'+button('guild-conflicts','exportConflicts'):'')+'</details>';
   panel.querySelector('#guild-language').value=I.language;
   panel.querySelector('#guild-language').onchange=async e=>{if(busy||locked())return;const language=e.target.value;I.set(language);if(scope==='account')await write(bridge.db(),'profiles',{id:'__guild_settings__',recordType:'guild-settings',language});bridge.render();render();};
   const on=(id,fn)=>{const e=panel.querySelector('#'+id);if(e)e.onclick=()=>perform(fn);};
-  on('guild-logout',async()=>{mask();scope='guest';owner=null;set('tower-guild-mode','isolated');localStorage.removeItem('tower-guild-owner');try{await client.auth.signOut({scope:'local'});}finally{location.reload();}});
+  on('guild-logout',async()=>{changing=true;mask();scope='guest';owner=null;set('tower-guild-mode','isolated');localStorage.removeItem('tower-guild-owner');try{await client.auth.signOut({scope:'local'});}finally{location.reload();}});
   const form=panel.querySelector('#guild-login');if(form)form.onsubmit=e=>{e.preventDefault();const email=panel.querySelector('#guild-email').value,create=panel.querySelector('#guild-register').checked;perform(async()=>{const redirect=new URL(location.href);redirect.search='';redirect.hash='';const {error}=await client.auth.signInWithOtp({email,options:{shouldCreateUser:create,emailRedirectTo:redirect.href}});if(error)throw error;status=t('sent');});};
   on('guild-sync',sync);const migration=panel.querySelector('#guild-migration');if(migration)migration.onclick=()=>showMigration().catch(e=>{status=errorMessage(e);render();});
   on('guild-backup',async()=>{await exportDatabase(bridge.db());status='';});
@@ -112,5 +113,5 @@
   };
  }
  function locked(){try{const value=JSON.parse(get('tower-sync-lock:'+owner)||'null');return !!value&&value.until>Date.now();}catch{return true;}}
- const api={init,bind,databaseName,render,sync,get locked(){return locked();},get scope(){return scope;},get busy(){return busy;},get owner(){return owner;}};root.TowerGuild=api;
+ const api={init,bind,databaseName,render,sync,get locked(){return locked();},get changing(){return changing;},get scope(){return scope;},get busy(){return busy;},get owner(){return owner;}};root.TowerGuild=api;
 })(window);

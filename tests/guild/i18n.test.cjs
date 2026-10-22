@@ -1,0 +1,3 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),I=require('../../guild/i18n.js');
+test('every keyed Guild message has German and English translations',()=>{for(const [key,values] of Object.entries(I.messages)){assert.equal(values.length,2,key);assert.ok(values[0]&&values[1],key);}});
+test('switching languages renders keyed farming scope while keeping numeric facts',()=>{I.set('en');assert.match(I.t('farmingScope',{normal:2,total:4,tournament:1,dissonance:1,unknown:0,invalid:0}),/2 of 4 runs/);assert.equal(I.t('sync'),'Sync now');I.set('de');assert.equal(I.t('sync'),'Jetzt synchronisieren');});

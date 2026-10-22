@@ -11,7 +11,9 @@
  };
  let language='de';try{language=localStorage.getItem('tower-language')||'de';}catch{}
  if(!['de','en'].includes(language))language='de';
- function t(key){return messages[key]?.[language==='en'?1:0]||key;}
+ messages.farmingScope=['Farming: {normal} von {total} Runs. Nicht berücksichtigt: {tournament} Tournament · {dissonance} Dissonanz · {unknown} Modus unbekannt / widersprüchlich. Unvollständige Normalruns: {invalid}. Unbekannte Modi unter „Strategie / Modus“ prüfen; Tages-/Nachtstrategie bestätigt keinen Normalmodus.','Farming: {normal} of {total} runs. Excluded: {tournament} Tournament · {dissonance} Dissonance · {unknown} unknown / conflicting mode. Incomplete normal runs: {invalid}. Review unknown modes under “Strategy / mode”; day/night strategy does not confirm normal mode.'];
+ Object.assign(legacy,{'Run-Strategie':'Run strategy','Dissonanz-Art (nur bei Dissonanz)':'Dissonance type (Dissonance only)','Modus unbekannt':'Unknown mode','Modus widersprüchlich':'Conflicting mode','Kontext bestätigen':'Confirm context','Tag / aktiv':'Day / active','Nacht / AFK':'Night / AFK','manuell bestätigt':'manually confirmed','automatisch aus Report':'detected from report','unbekannt':'unknown','Datum unbekannt':'Unknown date','gewichtet':'weighted'});
+ function t(key,values={}){return (messages[key]?.[language==='en'?1:0]||key).replace(/\{(\w+)\}/g,(match,name)=>String(values[name]??match));}
  function set(value){if(!['de','en'].includes(value))return;language=value;try{localStorage.setItem('tower-language',value);}catch{}root.document?.documentElement.setAttribute('lang',value);}
  function apply(node){if(!node)return;root.document.documentElement.lang=language;if(language!=='en')return;
   const walker=root.document.createTreeWalker(node,4);let text;while(text=walker.nextNode()){

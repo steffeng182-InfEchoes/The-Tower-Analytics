@@ -40,7 +40,7 @@ Official rules checked 2026-10-22: [Free project pausing](https://supabase.com/d
 
 ## Verification record
 
-Local: 15 dependency-free tests passed (9 merge/config/idempotency, 3 full-backup validation, 3 health/failure tests). All added JS and the inline app script pass syntax checks. `npm ci` is blocked by executor network permissions (EPERM to the configured proxy); local Chromium is blocked by socket sandbox restrictions. Existing tests and new browser tests are submitted to branch CI. The new browser suite uses a clearly marked cloud adapter; it tests application behavior, not RLS.
+Local: 17 dependency-free tests passed (9 merge/config/idempotency, 3 full-backup validation, 3 health/failure tests, 2 language catalogue/interpolation tests). All added JS and the inline app script pass syntax checks. `npm ci` is blocked by executor network permissions (EPERM to the configured proxy); local Chromium is blocked by socket sandbox restrictions. Existing tests and new browser tests are submitted to branch CI. The new browser suite uses a clearly marked cloud adapter; it tests application behavior, not RLS.
 
 Real RLS harness was invoked and exited with `Real RLS test NOT RUN` because project/test credentials are missing. No real Auth, database migration, advisor audit, email delivery, authenticated two-account API access or scheduled production health run has been verified. Physical Android acceptance is outstanding. See the PR and current CI result for subsequent actual validation.
 
