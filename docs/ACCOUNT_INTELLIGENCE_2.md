@@ -24,8 +24,8 @@ Relic percent aggregation supports Coins, Health, Damage, Orb Speed, Lab Speed, 
 
 ## C — Other systems
 
-Deferred until Labs/Relics are complete. Existing manual legacy records remain readable. Workshop level inversion is not implemented. No new incomplete subsystem importer is promoted.
+Reviewed and deliberately deferred: Cards need reliable level/equipment evidence; UW/Modules/Bots/Guardians need context-specific stacking rules and representative images. No additional automatic importer is promoted. Existing manual records remain readable and appear as unsupported sources. Workshop level inversion remains outside scope.
 
 ## D/E — Shared engine and dashboard
 
-The working Labs flow already renders confirmed counts, source-labelled partial bonuses, unknown factors, contradictions, append-only history and as-of account values for a selected actual report. Further Relic contributions follow in milestone B. No causal or account-strength claim.
+The working Labs flow already renders confirmed counts, source-labelled partial bonuses, unknown factors, contradictions, append-only history and as-of account values for a selected actual report. Relic percent groups and the supported lab factors now use one live engine. All calculations trace record ID, source, date, rule and pinned game-data revision. Future-effective data is excluded from the current snapshot. Orb Speed and unsupported mechanisms never receive a fabricated full total. The dashboard adds the other manually recorded systems, explicit historical value transitions, and a labelled 30-day review reminder (not a claim that an old value is wrong). Manual editing and actual report-as-of behavior are covered by the final browser acceptance. No causal or account-strength claim.
