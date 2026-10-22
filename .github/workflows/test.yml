@@ -1,10 +1,14 @@
 name: Critical data paths
 on: [push, pull_request]
+concurrency:
+  group: account-checks-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
   regression:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
