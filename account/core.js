@@ -53,7 +53,7 @@
    let effectRaw=String(row.effectRaw||'').trim();if(effectRaw&&!number(effectRaw))throw Error(k.name+': Effekt als x1.20, +2.00 oder 2% eintragen.');
    const old=previous.find(e=>e.knowledgeId===k.id);if(!effectRaw&&old?.value===value)effectRaw=old.confirmedEffect||'';if(old&&old.value===value&&String(old.confirmedEffect||'')===effectRaw&&String(old.researchStatus||'unknown')===String(row.researchStatus||'unknown'))continue;
    if(k.category==='Labs'&&old&&/^\d+$/.test(old.value)&&Number(value)<Number(old.value)&&!row.allowDecrease)throw Error(k.name+': niedrigeres Level benötigt ausdrückliche Korrekturfreigabe.');
-   prepared.push({id:makeId(),playerId,category:k.category,knowledgeId:k.id,name:k.name,value,valueType:'confirmed',confirmationStatus:'confirmed',schemaVersion:2,confirmedEffect:effectRaw,researchStatus:row.researchStatus||'unknown',researchTargetLevel:row.targetLevel??null,sourceType:source,evidence:row.sourceText||'Am Original geprüft',capturedAt:at,updatedAt:at,effectiveAt:at,previousEntryId:old?.id||null,revision:(old?.revision||0)+1,knowledgeVersion:VERSION});
+   prepared.push({id:makeId(),playerId,category:k.category,knowledgeId:k.id,name:k.name,value,valueType:'confirmed',confirmationStatus:'confirmed',schemaVersion:2,confirmedEffect:effectRaw,researchStatus:row.researchStatus||'unknown',researchTargetLevel:row.targetLevel??null,visibleMaxLevel:row.visibleMax??null,referenceMaxLevel:k.maxLevel??null,sourceType:row.captureMethod==='icon-reference'?'icon-reviewed':source,evidence:row.sourceText||'Am Original geprüft',capturedAt:at,updatedAt:at,effectiveAt:at,previousEntryId:old?.id||null,revision:(old?.revision||0)+1,knowledgeVersion:VERSION});
   }return prepared;
  }
  function calculate(entries,catalog,at=Infinity){
@@ -75,7 +75,7 @@
   const effects=[...groups].map(([effect,parts])=>{const relicPercent=parts.filter(p=>p.operation==='relic-sum').reduce((s,p)=>s+p.value,0),lab=parts.find(p=>p.operation==='lab-factor'),flat=parts.find(p=>p.operation==='lab-add');let value=null,expression;
    if(effect==='orb_speed'){expression='Lab-Zuschlag '+(flat?.value??'?')+'; Relics +'+Number((relicPercent*100).toFixed(4))+'%. Workshop-Grundwert und weitere Einflüsse fehlen.';}
    else {value=Number(((lab?.value??1)*(1+relicPercent)).toFixed(9));expression=(lab?lab.value:'1')+' × (1 + '+Number(relicPercent.toFixed(6))+')';}
-   return {effect,label:LABELS[effect],parts,value,expression,complete:false,scope:'Bekannter Teilbonus; kein vollständiger Kampf-Endwert',stackSource:STACK_SOURCE};});
+   return {effect,label:LABELS[effect],parts,value,expression,complete:false,scope:effect==='lab_speed'?'Bekannter Teilbonus für andere Labs; Lab-Speed-Forschung selbst benötigt eine eigene Zeitregel. Weitere Beschleunigungen fehlen.':'Bekannter Teilbonus; kein vollständiger Kampf-Endwert',stackSource:STACK_SOURCE};});
   return {version:VERSION,selected,contributions,effects,unknown,issues};
  }
  return {VERSION,SOURCE,STACK_SOURCE,RULES,LABELS,ALIASES,current,confirmed,parse,recognize,prepare,calculate,number};
