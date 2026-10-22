@@ -10,7 +10,7 @@
  function set(key,value){localStorage.setItem(key,value);}
  function mask(){document.querySelector('#view')?.replaceChildren();bridge?.clear();}
  function scopeChange(id){changing=true;mask();set('tower-guild-mode','isolated');if(id)set('tower-guild-owner',id);else localStorage.removeItem('tower-guild-owner');location.reload();}
- function errorMessage(e){if(['cloudConfig','backupRequired','sessionExpired','changed','localDuplicate'].includes(e?.message))return t(e.message);if(e?.status===401||e?.code==='PGRST301')return t('sessionExpired');if(e?.name==='TypeError'||e?.name==='TimeoutError')return t('network');return t('cloudError');}
+ function errorMessage(e){if(['cloudConfig','backupRequired','sessionExpired','changed','localDuplicate','syncUnsupported'].includes(e?.message))return t(e.message);if(e?.status===401||e?.code==='PGRST301')return t('sessionExpired');if(e?.name==='TypeError'||e?.name==='TimeoutError')return t('network');return t('cloudError');}
  async function perform(fn){if(busy||locked())return;busy=true;status=t('busy');render();try{await fn();}catch(e){status=errorMessage(e);}finally{busy=false;render();}}
  async function init(){
   try{client=await root.TowerCloud.create(root.TOWER_CLOUD_CONFIG);}catch(e){status=errorMessage(e);}
@@ -62,6 +62,7 @@
  function checkOwner(id){if(owner!==id||scope!=='account')throw Error('changed');}
  async function allRemote(id){const result=[];for(const table of ['player_runs','player_documents']){for(let offset=0;;offset+=500){const {data,error}=await client.from(table).select('*').eq('user_id',id).order(table==='player_runs'?'client_run_id':'client_id').range(offset,offset+499);if(error)throw error;for(const row of data)result.push(table==='player_runs'?{key:row.client_run_id,store:'runs',data:row.run_data,revision:row.revision,deleted:row.deleted}:{key:row.client_id,store:row.kind,data:row.document,revision:row.revision,deleted:row.deleted});if(data.length<500)break;}}return result;}
  async function sync(){
+  if(!navigator.locks)throw Error('syncUnsupported');
   const id=await authenticated(),db=bridge.db();manifest=await getManifest();
   const lock=async()=>{
    const token=crypto.randomUUID();set('tower-sync-lock:'+id,JSON.stringify({token,until:Date.now()+120000}));
@@ -71,9 +72,16 @@
    const initial=S.stable(local),remote=await allRemote(id);checkOwner(id);
    // Re-read after network I/O; user edits must never be overwritten by an old snapshot.
    const current=[];for(const store of stores)for(const data of await read(db,store))if((!data.recordType||data.recordType==='guild-settings')&&!data.guildSeed)current.push({store,data});if(S.stable(current)!==initial)throw Error('changed');
+   const mutateLocal=(store,data,remove=false)=>new Promise((ok,no)=>{
+    const expected=local.find(item=>item.store===store&&item.data.id===data.id)?.data,tx=db.transaction(store,'readwrite'),object=tx.objectStore(store),request=object.get(data.id);
+    request.onsuccess=()=>{const current=request.result,seed=store==='profiles'&&!expected&&current?.guildSeed;
+     if(!seed&&!S.equivalent(current,expected)){tx.abort();return;}
+     if(remove)object.delete(data.id);else object.put(data);
+    };tx.oncomplete=ok;tx.onerror=()=>no(tx.error);tx.onabort=()=>no(Error('changed'));
+   });
    const result=await S.synchronize({local,remote,manifest,guard:()=>checkOwner(id),
     saveManifest:value=>write(db,'profiles',{id:'__guild_sync__',recordType:'guild-sync',value}),
-    putLocal:(store,data)=>write(db,store,data),removeLocal:(store,key)=>erase(db,store,key),
+    putLocal:(store,data)=>mutateLocal(store,data),removeLocal:(store,key)=>mutateLocal(store,{id:key},true),
     writeRemote:async(row,revision)=>{
      const run=row.store==='runs',table=run?'player_runs':'player_documents',keyColumn=run?'client_run_id':'client_id';
      const payload=run?{user_id:id,client_run_id:row.key,source_hash:row.key.startsWith('report:')?row.key.slice(7):null,run_data:row.data,deleted:row.deleted}:{user_id:id,client_id:row.key,kind:row.store,document:row.data,deleted:row.deleted};
