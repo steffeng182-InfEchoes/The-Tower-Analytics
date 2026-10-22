@@ -18,7 +18,7 @@
  const confirmed=e=>e.valueType!=='observed'&&e.valueType!=='estimated'&&e.sourceType!=='ocr-unconfirmed'&&e.confirmationStatus!=='pending';
  const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
  const stamp=e=>e.effectiveAt||e.updatedAt;
- function current(entries,at=Infinity){const map=new Map();for(const e of entries){const time=Date.parse(stamp(e));if(!confirmed(e)||!Number.isFinite(time)||time>at)continue;const key=e.category+'|'+(e.knowledgeId||norm(e.name));const old=map.get(key);if(!old||time>Date.parse(stamp(old))||time===Date.parse(stamp(old))&&String(e.id)>String(old.id))map.set(key,e);}return [...map.values()];}
+ function current(entries,at=Infinity){const map=new Map();for(const e of entries){const time=Date.parse(stamp(e));if(!confirmed(e)||!Number.isFinite(time)||time>at)continue;const key=e.category+'|'+(e.knowledgeId||norm(e.name));const old=map.get(key);if(!old||time>Date.parse(stamp(old))||time===Date.parse(stamp(old))&&((e.revision||0)>(old.revision||0)||(e.revision||0)===(old.revision||0)&&String(e.updatedAt||e.id)>String(old.updatedAt||old.id)))map.set(key,e);}return [...map.values()];}
  function catalogue(catalog,category){return catalog.filter(k=>k.category===category).map(k=>({...k,aliases:[...(k.aliases||[]),...(ALIASES[k.id]||[])]}));}
  function matching(text,catalog){const options=[];for(const k of catalog)for(const label of [k.name,...k.aliases||[]]){const escaped=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const m=new RegExp('(^|[^a-z])('+escaped+')(?![a-z])','i').exec(text);if(m)options.push({k,index:m.index+m[1].length,end:m.index+m[0].length,label});}return options.sort((a,b)=>b.label.length-a.label.length)[0];}
  function parse(text,category,catalog){
@@ -53,7 +53,7 @@
    const effectRaw=String(row.effectRaw||'').trim();if(effectRaw&&!number(effectRaw))throw Error(k.name+': Effekt als x1.20, +2.00 oder 2% eintragen.');
    const old=previous.find(e=>e.knowledgeId===k.id);if(old&&old.value===value&&String(old.confirmedEffect||'')===effectRaw&&String(old.researchStatus||'unknown')===String(row.researchStatus||'unknown'))continue;
    if(k.category==='Labs'&&old&&/^\d+$/.test(old.value)&&Number(value)<Number(old.value)&&!row.allowDecrease)throw Error(k.name+': niedrigeres Level benötigt ausdrückliche Korrekturfreigabe.');
-   prepared.push({id:makeId(),playerId,category:k.category,knowledgeId:k.id,name:k.name,value,valueType:'confirmed',confirmationStatus:'confirmed',schemaVersion:2,confirmedEffect:effectRaw,researchStatus:row.researchStatus||'unknown',researchTargetLevel:row.targetLevel??null,sourceType:source,evidence:row.sourceText||'Am Original geprüft',capturedAt:at,updatedAt:at,effectiveAt:at,previousEntryId:old?.id||null,knowledgeVersion:VERSION});
+   prepared.push({id:makeId(),playerId,category:k.category,knowledgeId:k.id,name:k.name,value,valueType:'confirmed',confirmationStatus:'confirmed',schemaVersion:2,confirmedEffect:effectRaw,researchStatus:row.researchStatus||'unknown',researchTargetLevel:row.targetLevel??null,sourceType:source,evidence:row.sourceText||'Am Original geprüft',capturedAt:at,updatedAt:at,effectiveAt:at,previousEntryId:old?.id||null,revision:(old?.revision||0)+1,knowledgeVersion:VERSION});
   }return prepared;
  }
  function calculate(entries,catalog,at=Infinity){
