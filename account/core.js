@@ -27,21 +27,23 @@
   const proposals=[];
   for(let a=0;a<anchors.length;a++){
    const row=anchors[a],end=Math.min(anchors[a+1]?.i??lines.length,row.i+5),region=lines.slice(row.i,end).join(' '),tail=region.slice(row.end),explicit=tail.match(/\b(?:lv[l]?|level|stufe)\.?\s*[:#]?\s*(\d{1,3})(?:\s*\/\s*(\d{1,3}))?/i);
-   const running=/select research|research selection|forschung auswählen/i.test(text)||/\b(?:rush|researching|remaining|in progress|erforscht gerade|verbleibend)\b/i.test(region),locked=/\b(?:locked|not owned|unowned|gesperrt|nicht im besitz)\b/i.test(region);
+   const selection=/select research|research selection|forschung auswählen/i.test(text),running=/\b(?:rush|researching|remaining|in progress|erforscht gerade|verbleibend)\b/i.test(region),locked=/\b(?:locked|not owned|unowned|gesperrt|nicht im besitz)\b/i.test(region);
    const effect=tail.match(/(?:x|×)\s*\d+(?:[.,]\d+)?|[+]\s*\d+(?:[.,]\d+)?\s*%?|\d+(?:[.,]\d+)\s*%/i)?.[0]||'';
    if(category==='Labs'&&!explicit&&!effect)continue;
-   proposals.push({knowledgeId:row.k.id,name:row.k.name,category,level:explicit&&!running?Number(explicit[1]):null,targetLevel:explicit&&running?Number(explicit[1]):null,maxLevel:row.k.maxLevel??null,visibleMax:explicit?.[2]?Number(explicit[2]):null,effectRaw:effect,researchStatus:running?'running':/\bmax(?:ed)?\b/i.test(region)?'max':'unknown',owned:category==='Relics'?locked?false:null:undefined,sourceText:region.slice(0,500),confirmationStatus:'pending'});
+   proposals.push({knowledgeId:row.k.id,name:row.k.name,category,level:explicit&&!running&&!selection?Number(explicit[1]):null,targetLevel:explicit&&(running||selection)?Number(explicit[1]):null,maxLevel:row.k.maxLevel??null,visibleMax:explicit?.[2]?Number(explicit[2]):null,effectRaw:effect,researchStatus:running?'running':/\bmax(?:ed)?\b/i.test(region)?'max':'unknown',owned:category==='Relics'?locked?false:null:undefined,sourceText:region.slice(0,500),confirmationStatus:'pending'});
   }
   return proposals;
  }
  function recognize(recognized,category,catalog){
-  const map=new Map();
+  const map=new Map(),selection=(recognized.passes||[]).some(p=>/select research|research selection|forschung auswählen/i.test(p.text||''));
   for(const pass of recognized.passes||[]){
-   const texts=[pass.text||''];
+   const texts=[{text:pass.text||'',spatial:false}];
    // Column-local reading avoids pairing the next column's price/level with a name.
-   if(pass.words?.length&&recognized.prepared?.width){const width=recognized.prepared.width*(pass.scale||1)/(recognized.prepared.scale||1);for(let col=0;col<2;col++){const words=pass.words.filter(w=>w.bbox&&w.bbox.x0>=col*width/2&&w.bbox.x0<(col+1)*width/2).sort((a,b)=>a.bbox.y0-b.bbox.y0);const groups=[];for(const w of words){const cy=(w.bbox.y0+w.bbox.y1)/2,h=w.bbox.y1-w.bbox.y0;let g=groups.find(g=>Math.abs(g.y-cy)<Math.max(h,g.h)*.55);if(!g){g={y:cy,h,words:[]};groups.push(g);}g.words.push(w);}texts.push(groups.sort((a,b)=>a.y-b.y).map(g=>g.words.sort((a,b)=>a.bbox.x0-b.bbox.x0).map(w=>w.text).join(' ')).join('\n'));}}
-   for(const text of texts)for(const p of parse(text,category,catalog)){const old=map.get(p.knowledgeId);if(!old)map.set(p.knowledgeId,p);else{if(p.level!==null&&old.level===null&&!old.targetLevel)Object.assign(old,p);else if(p.level!==null&&old.level!==null&&p.level!==old.level){old.alternatives=[...new Set([...(old.alternatives||[]),old.level,p.level])];old.level=null;old.ambiguous=true;}if(old.ambiguous)old.level=null;}}
+   if(pass.words?.length&&recognized.prepared?.width){const width=recognized.prepared.width*(pass.scale||1)/(recognized.prepared.scale||1);for(let col=0;col<2;col++){const words=pass.words.filter(w=>w.bbox&&w.bbox.x0>=col*width/2&&w.bbox.x0<(col+1)*width/2).sort((a,b)=>a.bbox.y0-b.bbox.y0);const groups=[];for(const w of words){const cy=(w.bbox.y0+w.bbox.y1)/2,h=w.bbox.y1-w.bbox.y0;let g=groups.find(g=>Math.abs(g.y-cy)<Math.max(h,g.h)*.55);if(!g){g={y:cy,h,words:[]};groups.push(g);}g.words.push(w);}texts.push({spatial:true,text:groups.sort((a,b)=>a.y-b.y).map(g=>g.words.sort((a,b)=>a.bbox.x0-b.bbox.x0).map(w=>w.text).join(' ')).join('\n')});}}
+   for(const segment of texts)for(const p of parse((selection?'SELECT RESEARCH\n':'')+segment.text,category,catalog)){p.positionEvidence=segment.spatial;const old=map.get(p.knowledgeId);if(!old||p.positionEvidence&&!old.positionEvidence){map.set(p.knowledgeId,p);continue;}if(old.positionEvidence&&!p.positionEvidence)continue;const value=p.level??p.targetLevel,previous=old.level??old.targetLevel;if(value!==null&&previous===null&&!old.ambiguous)Object.assign(old,p);else if(value!==null&&previous!==null&&value!==previous){old.alternatives=[...new Set([...(old.alternatives||[]),value,previous])];old.level=null;old.targetLevel=null;old.ambiguous=true;}if(p.effectRaw&&old.effectRaw&&p.effectRaw!==old.effectRaw){old.effectAlternatives=[...new Set([...(old.effectAlternatives||[]),old.effectRaw,p.effectRaw])];old.effectRaw='';}if(old.ambiguous)old.level=null;}
   }
+  for(const p of map.values()){const rule=RULES[p.knowledgeId],visible=number(p.effectRaw);if(rule&&p.targetLevel!==null&&p.level===null&&!p.ambiguous&&visible&&!visible.percent){const derived=Math.round((visible.value-rule.base)/rule.step);if(derived>=0&&derived<=p.maxLevel&&derived+1===p.targetLevel&&Math.abs(rule.base+derived*rule.step-visible.value)<.005)p.suggestedLevel=derived;}}
+
   return [...map.values()];
  }
  function number(raw){const m=String(raw||'').trim().match(/^(?:x|×|\+)?\s*(\d+(?:[.,]\d+)?)\s*(%)?$/i);return m?{value:Number(m[1].replace(',','.')),percent:!!m[2]}:null;}
@@ -53,7 +55,7 @@
    let effectRaw=String(row.effectRaw||'').trim();if(effectRaw&&!number(effectRaw))throw Error(k.name+': Effekt als x1.20, +2.00 oder 2% eintragen.');
    const old=previous.find(e=>e.knowledgeId===k.id);if(!effectRaw&&old?.value===value)effectRaw=old.confirmedEffect||'';if(old&&old.value===value&&String(old.confirmedEffect||'')===effectRaw&&String(old.researchStatus||'unknown')===String(row.researchStatus||'unknown'))continue;
    if(k.category==='Labs'&&old&&/^\d+$/.test(old.value)&&Number(value)<Number(old.value)&&!row.allowDecrease)throw Error(k.name+': niedrigeres Level benötigt ausdrückliche Korrekturfreigabe.');
-   prepared.push({id:makeId(),playerId,category:k.category,knowledgeId:k.id,name:k.name,value,valueType:'confirmed',confirmationStatus:'confirmed',schemaVersion:2,confirmedEffect:effectRaw,researchStatus:row.researchStatus||'unknown',researchTargetLevel:row.targetLevel??null,visibleMaxLevel:row.visibleMax??null,referenceMaxLevel:k.maxLevel??null,sourceType:row.captureMethod==='icon-reference'?'icon-reviewed':source,evidence:row.sourceText||'Am Original geprüft',capturedAt:at,updatedAt:at,effectiveAt:at,previousEntryId:old?.id||null,revision:(old?.revision||0)+1,knowledgeVersion:VERSION});
+   prepared.push({id:makeId(),playerId,category:k.category,knowledgeId:k.id,name:k.name,value,valueType:'confirmed',confirmationStatus:'confirmed',schemaVersion:2,confirmedEffect:effectRaw,researchStatus:row.researchStatus||'unknown',researchTargetLevel:row.targetLevel??null,visibleMaxLevel:row.visibleMax??null,referenceMaxLevel:k.maxLevel??null,sourceType:row.captureMethod==='icon-reference'?'icon-reviewed':source,evidence:row.sourceText||'Am Original geprüft',capturedAt:at,updatedAt:at,effectiveAt:at,previousEntryId:old?.id||null,revision:(old?.revision||0)+1,levelProvenance:row.suggestedLevel===Number(value)?'derived-reviewed':'reviewed',knowledgeVersion:VERSION});
   }return prepared;
  }
  function calculate(entries,catalog,at=Date.now()){
