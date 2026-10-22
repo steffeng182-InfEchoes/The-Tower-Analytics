@@ -1,31 +1,108 @@
-# Account Intelligence 2.0 — acceptance log
+# Account Intelligence 2.0 — Umsetzung und Abnahme
 
-Branch `feature/account-intelligence-2`, based on production main `769732b`. Guild PR #6 is not modified. No merge or production deployment.
+Entwicklung auf `feature/account-intelligence-2`, ausgehend vom produktiven `main` (`769732b`), [Pull Request #7](https://github.com/steffeng182-InfEchoes/The-Tower-Analytics/pull/7). Kein Merge und kein produktives Deployment. Guild-Branch und PR #6 wurden nicht verändert. Die neuen Funktionen stehen tatsächlich im Account-Tab des Beta-Builds zur Verfügung.
 
-## A — Labs: implemented and browser verified
+## Meilensteine
 
-Application commits `d4e746e`, `ce03a1a`, `cbdeb24d`. Successful complete CI: https://github.com/steffeng182-InfEchoes/The-Tower-Analytics/actions/runs/39830924684 . All 60 existing tests, six new core tests, original mobile regression, both real OCR suites and the new account browser flow passed.
+| Bereich | Ergebnis | Grenze |
+| --- | --- | --- |
+| A — Labs | Screenshot → bearbeitbare Sammelprüfung → atomare bestätigte Speicherung → Verlauf → Bonus-Engine → Reload getestet | Unlesbare Werte und nicht verifizierte Formeln bleiben unbekannt |
+| B — Relics | Eigenständiger OCR-Import, Symbolvergleich, Besitzprüfung, Sammelspeicherung, Reload und Bonusaggregation getestet | Zwölf Bildreferenzen; unbekannte oder uneindeutige Symbole werden nicht geraten |
+| C — weitere Systeme | Geprüft und bewusst zurückgestellt; alte manuelle Datensätze bleiben nutzbar | Keine neuen unfertigen Card-/UW-/Module-/Bot-/Guardian-Importer |
+| D — Bonus-Engine | Gemeinsame Effekt-IDs, Rechenregeln, Herkunft, Version und automatische Neuberechnung integriert | Teilboni statt erfundener vollständiger Kampfwerte |
+| E — Dashboard | Bestand, bekannte Boni, Herkunft, Verlauf, Datenqualität und Report-Zeitbezug aus gespeicherten Daten | Keine kausale Leistungs- oder unbelegte Account-Stärkebewertung |
 
-The new Account panel actually uses Tesseract Worker/WASM, shows editable unchecked proposals, accepts explicit batch confirmation, appends account history atomically in the existing accountEntries store, recomputes bonuses and survives reload. The database name/version/stores remain unchanged. No source images are uploaded. Existing reports and manually recorded account values were compared unchanged in the browser test. Repeat confirmed observations do not create history duplicates. Backup/reimport preserves new fields and skips existing IDs.
+## A — Tatsächliche Labs-Erkennung
 
-Image evidence: three-row reconstructed dark game-style raster (Orb Speed Lv20/+2.00, Critical Factor Lv28/x1.84, Lab Speed Lv40/x1.80), corrected to Lv41/x1.82 through UI; another raster updates Lab Speed to42/x1.84. Real public Game Speed Lv7/Rush screenshot from the existing SOURCES.md is also recognized, with target7 and **unknown completed level**. No OCR text/output is mocked. Reconstructed images prove the multi-row pixel pipeline; they are not actual user account screenshots. More real multi-row layouts and physical Android use remain unverified.
+Die App verwendet die bestehende echte Tesseract-Worker/WASM-Pipeline. Ungeprüfte Vorschläge schreiben keine Account-Werte. Level, sichtbarer Effekt und Bestätigung sind kompakt editierbar; Zuordnung, Status und OCR-Beleg bleiben aufklappbar. Mehrere geprüfte Zeilen werden gemeinsam gespeichert. Falsche Lab-Zuordnungen und Zahlen sind korrigierbar. Ein niedrigerer bestätigter Level benötigt eine ausdrückliche Korrekturmarkierung.
 
-Seven lab formulas are supported: Lab Speed, Attack Speed, Coins/Kill (1+.02L), Critical Factor and Health (1+.03L), Damage (1+.02L), Orbs Speed (+.1L). Source: pinned TheTowerSDK 6a6d3bc9101d68ad65b355122c6fe66af0a4610f, labs/catalog.data.ts; the source base/value fields were inspected. Orb Speed alias maps to catalog Orbs Speed. Unknown lab formulas including DW Health are shown as unknown; its level is still captured/stored. A conflicting confirmed visible effect is preserved and excluded from calculation. The engine never treats the partial lab factor as the full combat stat.
+Reale Bildtests:
 
-## B — Relics
+- `labs-real-list.jpg`: echter zweispaltiger **Select Research**-Screenshot. Erkannt wurden unter anderem Starting Cash, Workshop Defense Discount, Workshop Utility Discount, Damage, Attack Speed, Critical Factor, Range, Damage / Meter und Super Crit Chance. Die neun tatsächlich lesbaren Zeilen werden nicht mit einer vollständigen Erfassung aller sichtbaren/dunklen Felder gleichgesetzt.
+- Attack Speed zeigt Ziel-Level52 und aktuellen Effekt x2.02; Critical Factor Ziel-Level35 und aktuellen Effekt x2.02. Daraus entstehen ausschließlich **prüfpflichtige** Vorschläge für aktuelle Levels51 beziehungsweise34. Ziel-Level, aktueller Effekt und hinterlegte Formel müssen übereinstimmen. Der Browser-Test bestätigt diese zwei Werte ausdrücklich, speichert sie, lädt neu und prüft die resultierenden Faktoren x2.02.
+- Der vorhandene echte Game-Speed-/Rush-Screenshot bleibt Ziel-Level7 bei **unbekanntem abgeschlossenen Level**. Eine willkürliche Halbierung des Bildes darf diese Information nicht ersetzen.
 
-Implemented and complete pipeline passed on commit `1f838430`, CI run [39833283155](https://github.com/steffeng182-InfEchoes/The-Tower-Analytics/actions/runs/39833283155).
+Zusätzlich erzeugen die Tests realitätsgetreue dunkle Rasterbilder mit Orb Speed20/+2.00, Critical Factor28/x1.84 und Lab Speed40/x1.80. Korrektur auf41/x1.82, späterer Screenshot42/x1.84 und manuelle Änderung43 werden über echte UI-/Speicher-/Berechnungswege geprüft. Diese Zahlen sind ausschließlich Testdaten, niemals angenommene Werte des Hauptnutzers. Die OCR-Ausgaben sind nicht gemockt.
 
-Real public multi-relic shop screenshot: Falling Apple, Haunted Mirror, 3 Body Solution and Crop Circle were recognized by actual Tesseract Worker/WASM. Ownership stayed unknown until explicitly selected. Separate reconstructed name lists and a symbol-only raster made from real Flux/Lumin/Pulse art passed batch ownership confirmation, persisted after reload, fed the same bonus engine, and did not double-count overlapping imports. Unknown visual cells, blank screenshots and damaged images did not change stored entries. Final Labs/Relics backup restored in a genuinely fresh browser database and survived reload.
+Bestätigte Zustände besitzen stabile Spiel-ID, Level/Wert, bestätigten sichtbaren Effekt, Erfassungs- und Gültigkeitsdatum, Quelle, Bestätigungsstatus, Wissensversion, Revision und gegebenenfalls Vorgänger-ID. Ein Wiederholungsimport desselben Zustands erzeugt keine zusätzlichen Bonusquellen. Abweichende OCR-Lesarten bleiben sichtbar. Nicht erkannte Labs werden nicht ergänzt.
 
-Twelve pinned visual references are maintained in `account/relic-vision.js`; see THIRD_PARTY_LICENSES.md. Symbol screenshots need an explicitly selected, square-cell grid crop. Matching checks absolute similarity, best/runner-up error ratio and margin; every match remains an unchecked proposal. Unmatched symbols can be manually assigned or left unresolved. This does not claim automatic segmentation or recognition of the complete game relic collection. Different device scaling/backgrounds and physical Android symbol layouts still need broader real-image testing.
+## B — Tatsächliche Relics-Erkennung
 
-Relic percent aggregation supports Coins, Health, Damage, Orb Speed, Lab Speed, Attack Speed and Critical Factor. Same-type relic percentages sum before multiplication with the corresponding supported lab factor. Coins/Kill lab is displayed separately from the broad Coins relic factor, without claiming a full yield model. Orb Speed lab flat additions and relic percentages remain separate because the workshop base and other modifiers are unknown. Unsupported types (e.g. Wall Rebuild seconds, Super Critical Chance) remain explicitly unknown; the engine never applies a guessed generic formula to them. Sources are the pinned SDK data and the cited Relics stacking description. Nine core tests plus all existing browser/OCR/data tests passed.
+`relics-real-shop.png` ist ein echter öffentlicher Spiel-Screenshot. Die echte Text-OCR erkennt **Falling Apple, Haunted Mirror, 3 Body Solution und Crop Circle**. Im Test werden Besitz beziehungsweise Nichtbesitz ausdrücklich ausgewählt, vier Zustände gespeichert und nach Reload gegen die Bonus-Engine geprüft. Das ist ein Testaccount; ein Shopbild selbst beweist niemals einen Kauf oder Besitz.
 
-## C — Other systems
+Für reine Symbolbilder kann der Nutzer ein Raster und dessen Bildausschnitt einstellen. Der lokale Vergleich sucht innerhalb jeder Zelle nach mittigen Symbolen verschiedener Größe und prüft Ähnlichkeit sowie Abstand zur nächstbesten Referenz. Im tatsächlichen Shop-Screenshot werden **Falling Apple und Haunted Mirror** visuell zugeordnet. Die beiden unteren Symbole bleiben beim geprüften Gesamtausschnitt ungeklärt; deren korrekte Text-OCR wird nicht als erfolgreicher Symbolvergleich ausgegeben.
 
-Reviewed and deliberately deferred: Cards need reliable level/equipment evidence; UW/Modules/Bots/Guardians need context-specific stacking rules and representative images. No additional automatic importer is promoted. Existing manual records remain readable and appear as unsupported sources. Workshop level inversion remains outside scope.
+Eine weitere Rasterprüfung mit echten Spielgrafiken erkennt Flux, Lumin und Pulse ohne Textnamen. Überlappende Imports zählen bereits vorhandene Relics nicht erneut. Unbekannte Symbole bleiben ungeklärt und können manuell zugeordnet werden. Jede Zuordnung braucht weiter Besitzwahl und Bestätigung.
 
-## D/E — Shared engine and dashboard
+Die zwölf unveränderten Bildreferenzen sind mit Ursprung, Lizenz und überprüften Original-Git-Checksummen unter `account/references/` gebündelt. Der Symbolvergleich braucht keinen fremden Bildserver. Siehe [Bildherkunft](../tests/fixtures/SOURCES.md) und [Lizenz-/Quellennachweise](THIRD_PARTY_LICENSES.md). Unbekannte Relics bekommen keine erfundenen Boni.
 
-The working Labs flow already renders confirmed counts, source-labelled partial bonuses, unknown factors, contradictions, append-only history and as-of account values for a selected actual report. Relic percent groups and the supported lab factors now use one live engine. All calculations trace record ID, source, date, rule and pinned game-data revision. Future-effective data is excluded from the current snapshot. Orb Speed and unsupported mechanisms never receive a fabricated full total. The dashboard adds the other manually recorded systems, explicit historical value transitions, and a labelled 30-day review reminder (not a claim that an old value is wrong). Manual editing and actual report-as-of behavior are covered by the final browser acceptance. No causal or account-strength claim.
+## C — Weitere Systeme und Workshop
+
+Cards benötigen zuverlässige Level- und Ausrüstungsnachweise; UW, Modules, Bots und Guardians zusätzlich kontextspezifische Rechenregeln und repräsentative Bilder. Diese automatischen Erfassungen sind zurückgestellt. Vorhandene manuelle Einträge bleiben lesbar, im Verlauf und in Backups erhalten; die neue Engine kennzeichnet ihre Berechnung als nicht integriert. Der alte experimentelle Bereich bleibt nachgeordnet und eingeklappt.
+
+Workshop-Screenshot-Levelerkennung und Levelrückrechnung sind nicht implementiert. Die Engine führt flache Zuschläge, Prozentgruppen, Faktoren und fehlende Grundwerte getrennt, sodass spätere eindeutige oder mehrdeutige Rückrechnungen darauf aufbauen können. Es gibt keine automatische Bestätigung rückgerechneter Workshop-Level.
+
+## D — Rechenregeln und Quellen
+
+Version `2026-10-22.1`. Quellen: [TheTowerSDK, unveränderliche Revision](https://github.com/TmRxJD/TheTowerSDK/tree/6a6d3bc9101d68ad65b355122c6fe66af0a4610f/src/data) und die [dokumentierte Relics-Gruppierung](https://the-tower-idle-tower-defense.fandom.com/wiki/Relics). Die verwendeten Lab-`base`-/`value`-Felder wurden in der Quelle geprüft. Es handelt sich um nachvollziehbare Community-Daten, keinen offiziellen automatischen Spielversionsfeed.
+
+| Quelle | Unterstützte Regel |
+| --- | --- |
+| Lab Speed, Attack Speed, Coins/Kill | 1 + 0.02 × Level |
+| Critical Factor, Health | 1 + 0.03 × Level |
+| Damage | 1 + 0.02 × Level |
+| Orbs Speed / Alias Orb Speed | flacher Zuschlag 0.1 × Level |
+| Unterstützte gleichartige Relics | Prozentwerte zunächst addieren |
+| Passender Lab-Faktor und Relics-Gruppe | Lab-Faktor × (1 + Summe der Relic-Prozente) |
+
+Unterstützte Relic-Prozentarten: Coins, Health, Damage, Orb Speed, Lab Speed, Attack Speed und Critical Factor. Beispiel ausschließlich als Rechentest: Coins2% + Coins5% ergeben Faktor1.07; Lab Speed1.80 und Relic-Lab-Speed1.5% ergeben1.827. Der Coins/Kill-Lab-Faktor und der allgemeine Coins-Relic-Faktor werden getrennt ausgewiesen; daraus wird kein vollständiger Coin-Ertrag erfunden.
+
+Orb Speed erhält keinen exakten Gesamtwert, solange Workshop-Grundwert und weitere Einflüsse fehlen. DW Health, Wall Rebuild in Sekunden, Super Critical Chance und andere nicht verifizierte Regeln bleiben ausdrücklich unbekannt. Eine pauschale Prozentverknüpfung wäre dafür nicht belegt. Bei Lab Speed weist die Ansicht auf die Sonderbehandlung der Lab-Speed-Forschung selbst hin; die App berechnet keine unbewiesenen Forschungszeiten.
+
+Nur bestätigte aktuelle Zustände tragen bei. Explizite alte deutsche/englische Besitzangaben bleiben kompatibel. Historische Wiederholungen zählen einmal. Unbestätigte OCR, Schätzungen, zukünftige Gültigkeitsdaten und widersprüchliche Level-/Effektpaare liefern keinen scheinbar gesicherten Bonus. Jeder Beitrag zeigt Datensatz-ID, Datum, Quelle, Regel und Wissensstand.
+
+## E — Dashboard und Report-Verbindung
+
+Die Account-Übersicht zeigt gespeicherte Lab- und Relic-Zahlen, weitere manuell erfasste Systeme, letzten bestätigten Stand, berechenbare Teilboni, unbekannte Regeln, Widersprüche und frühere Werte. Ein klar beschrifteter 30-Tage-Prüfhinweis bedeutet nicht, dass ein alter Wert falsch ist. Neue Lab-/Relic-Bestätigungen und Änderungen im bestehenden manuellen Formular berechnen die Ansicht sofort neu, ohne weiteren Import.
+
+Ein echter gespeicherter Battle Report kann ausgewählt werden. Seine tatsächliche Spielzeit begrenzt den angezeigten Account-Stand. Später dokumentierte Werte werden nicht in frühere Runs zurückprojiziert. Die Tests prüfen diesen Ablauf mit einem tatsächlichen gespeicherten Report. Keine Aussage über kausale Upgrade-Wirkungen.
+
+## Datenbestand und unabhängige Schichten
+
+- `account/core.js`: reine Erkennungsauswertung, Modellvalidierung, Verlaufsauswahl und Bonusberechnung; ohne DOM/IndexedDB testbar.
+- `account/relic-vision.js`: lokale Bildreferenzen und Mustervergleich.
+- `account/app.js`: nutzbare Oberfläche, explizite Prüfung und Adapter zur bestehenden App.
+- Der schmale Adapter in `index.html` fügt bestätigte Zustände in einer einzigen IndexedDB-Transaktion ein. Parser und Farming-Regeln wurden nicht umgeschrieben.
+
+`tower-analytics-alpha` bleibt **Version2** mit denselben Stores und Schlüsseln. Kein Start-Backfill, keine Datenbanklöschung und keine destruktive Schemamigration. Runs werden durch Account-Imports nicht geschrieben. Historische Account-Zustände werden angehängt. Die bestehende Account-JSON-Sicherung erhält alle zusätzlichen Felder; vorhandene Backups bleiben importierbar.
+
+Die Account-Wiederherstellung liest vorhandene IDs und fügt fehlende Einträge innerhalb derselben Transaktion ein. Vorhandene IDs bleiben unverändert; doppelte IDs innerhalb einer Sicherung werden abgewiesen. Ein Browser-Test provoziert einen konkurrierenden Schreibzugriff aus einem zweiten Tab und prüft, dass dessen Wert erhalten bleibt. Zusätzlich wird die gesamte Labs-/Relics-Sicherung in einer frischen Browser-Datenbank wiederhergestellt und nach Reload geprüft.
+
+Screenshots des Nutzers werden weder hochgeladen noch dauerhaft gespeichert. Die erste Text-OCR benötigt weiterhin die vorhandenen externen Tesseract-CDN-Assets; Fehler werden angezeigt. Zu große oder beschädigte Bilder werden abgefangen. Die gebündelten Testbilder sind öffentlich belegte Spielszenen, keine privaten Nutzerscreenshots.
+
+## Tatsächliche Tests und reproduzierbarer Build
+
+Bestätigt auf Anwendungskommit `54763045`: [vollständiger grüner Lauf39838285527](https://github.com/steffeng182-InfEchoes/The-Tower-Analytics/actions/runs/39838285527): **60 bestehende Tests, 16 zusätzliche Kerntests**, bestehende mobile Browserregression, beide echte OCR-Suiten und kompletter neuer Account-Browserfluss. Dazu gehören echte Mehrzeilen-/Mehrspaltenbilder, korrigierte Angaben, Sammelbestätigung, Wiederholungsimport, Aktualisierung, Reload, Bonusregeln, unbestätigte/fehlende Werte, Duplikatschutz, Bestandsdatenerhalt, 320/384/412px, unscharfe/abgeschnittene/leere/beschädigte Rasterbilder, Backup/Rückimport, frische Datenbank und konkurrierender Tab. Die kompakte Prüfoberfläche ist in diesem Lauf mitgeprüft. Ein späterer Abschlusscommit ändert nur diesen Bericht; die App-Dateien entsprechen weiterhin dem genannten geprüften Anwendungskommit.
+
+[Getestetes Beta-Paket](https://github.com/steffeng182-InfEchoes/The-Tower-Analytics/actions/runs/39838285527/artifacts/12452336432), SHA256 `15b8fd65755d951d56c5eac1e4731744842aee999b009c0dc49dae63340960b5`. Ein gleichnamiges neueres Paket steht nach einem erfolgreichen aktuellen PR-Check im jeweiligen Workflow-Lauf. Das Paket enthält die echte App, ihre neuen Module und Bildreferenzen.
+
+Reproduktion ohne Frontend-Bundler:
+
+```sh
+node scripts/build-account-beta.cjs
+python3 -m http.server 8080 --directory dist
+```
+
+Danach `http://localhost:8080/` öffnen und den Account-Tab wählen. Für einen Zugriff vom Telefon einen eigenen erreichbaren Test-Host mit HTTPS verwenden. Ein separates Origin besitzt eine separate IndexedDB: dort vertrauenswürdige Backups ausdrücklich importieren. Eine leere Vorschau bedeutet nicht, dass die Daten der Live-App gelöscht wurden.
+
+## Android-Abnahme und verbleibende Grenzen
+
+1. In der aktuellen Live-App Report-JSON und Account-JSON außerhalb des Browsers sichern. Keine Browserdaten löschen.
+2. Den Beta-Build auf einem separaten Test-Origin öffnen; Den Account-Tab öffnen. Bei Bedarf Sicherungskopien importieren.
+3. Auf dem Galaxy S24 Ultra im50/50-Split-Screen echten Lab-Screenshot wählen. Aktuelle Levels, Forschungsziele, sichtbare Effekte und Quelle am Original prüfen; falsche Zuordnungen über die aufklappbaren Korrekturen ändern.
+4. Mehrere Werte bestätigen, speichern, neu laden. Boni und Verlauf vergleichen. Denselben Screenshot erneut importieren; anschließend ein echtes späteres Level-Update prüfen.
+5. Relic-Screenshot importieren. Besitz ausdrücklich wählen. Bei reinen Symbolen Raster/Ausschnitt einstellen, Ungeklärtes offenlassen oder selbst zuordnen. Summen und Quellen kontrollieren; erneut importieren.
+6. Einen Lab-Wert manuell ändern. Die Bonusanzeige muss ohne Screenshot aktualisiert werden. Einen älteren Battle Report auswählen; spätere Zustände dürfen darin nicht erscheinen.
+7. Account-JSON erneut sichern und auf einem frischen Test-Origin wiederherstellen. Die bisherigen Original-Runs auf dem produktiven Origin unverändert vergleichen.
+
+**Fertig und automatisiert getestet:** die beschriebenen Labs-/Relics-Datenflüsse, unterstützte Bonusregeln, Dashboard, Speicherung, Bestandsdatenschutz und Backupwege. **Nicht vollständig verifiziert:** sämtliche Spielsprachen, seltene Layouts, alle symbolischen Relic-Varianten und die physische Android-Bedienung. **Offen/zurückgestellt:** weitere automatische Systeme, vollständige Kampf-Endwerte und Upgrade-/ROI-Empfehlungen. Die Tests gelten nicht als Abnahme eines echten persönlichen Account-Stands.
