@@ -1,0 +1,29 @@
+name: Real Supabase RLS integration
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  two-authenticated-users:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Discover pinned CLI commands
+        run: |
+          npx --yes supabase@2.121.0 --help
+          npx --yes supabase@2.121.0 init --help
+          npx --yes supabase@2.121.0 start --help
+          npx --yes supabase@2.121.0 status --help
+      - name: Initialize ephemeral test project
+        run: npx --yes supabase@2.121.0 init
+      - name: Start real Postgres, Auth and Data API and apply migrations
+        run: |
+          npx --yes supabase@2.121.0 start --exclude realtime,storage-api,imgproxy,studio,edge-runtime,logflare,vector,supavisor > "$RUNNER_TEMP/tower-stack.log" 2>&1 || { sed -E 's/eyJ[A-Za-z0-9_.-]+/[redacted JWT]/g; s/sb_secret_[A-Za-z0-9_-]+/[redacted secret]/g' "$RUNNER_TEMP/tower-stack.log" | tail -80; exit 1; }
+      - name: Real independent Auth accounts and API attacks
+        run: node scripts/local-rls.cjs
+      - name: Stop ephemeral stack
+        if: always()
+        run: npx --yes supabase@2.121.0 stop --no-backup
