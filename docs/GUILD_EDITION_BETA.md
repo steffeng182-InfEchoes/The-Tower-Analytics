@@ -28,7 +28,7 @@ The service worker caches only the static app shell for offline restart, never A
 
 ## Actual acceptance evidence
 
-Hosted workflow run **39772672721**, commit **2ced882** passed:
+Hosted workflow run **39773168159**, commit **21d234e** passed:
 
 - Two real independently authenticated users against the NEW HOSTED Supabase project.
 - Own CRUD, forged user IDs, cross-account SELECT/INSERT/UPDATE/DELETE, owner reassignment, duplicate inserts, stale revisions, profile policies and protected health RPC.
@@ -37,9 +37,9 @@ Hosted workflow run **39772672721**, commit **2ced882** passed:
 - Restricted public database health RPC, using only the public publishable key.
 - Test accounts and records were removed after acceptance.
 
-The normal suite additionally covers 60 existing regression/DOM tests, 19 Guild unit tests, existing mobile browser flows, the separately marked mock-cloud Guild browser suite, and two real OCR suites. The mock browser suite covers legacy consent/backup migration, unchanged source reports/account entries, full backup restore, fresh-device pulls and conflict preservation. The local Supabase RLS workflow uses real Postgres/Auth/Data API on every run. Current results are in PR Checks; do not infer success for a later commit from an earlier run.
+The normal suite additionally covers 60 existing regression/DOM tests, 19 Guild unit tests, existing mobile browser flows, the separately marked mock-cloud Guild browser suite, and two real OCR suites. The mock browser suite covers legacy consent/backup migration, unchanged source reports/account entries, full backup restore, fresh-device pulls and conflict preservation. The local Supabase RLS workflow uses real Postgres/Auth/Data API on every run. The static beta artifact is in [Critical data paths run 39773173512](https://github.com/steffeng182-InfEchoes/The-Tower-Analytics/actions/runs/39773173512). Current results are in PR Checks; do not infer success for a later commit from an earlier run.
 
-The hosted fixture service accepts only cryptographically verified GitHub OIDC from the owner's exact repository, branch, workflow and push event. Its admin operations are restricted to synthetic per-run test accounts, never ordinary members. No service key leaves the Edge runtime. It has a hard expiry and is disabled after final acceptance.
+The hosted fixture service accepts only cryptographically verified GitHub OIDC from the owner's exact repository, branch, workflow and approved push/manual event. Its admin operations are restricted to synthetic per-run test accounts, never ordinary members. No service key leaves the Edge runtime. It has a hard expiry and was disabled after final acceptance (HTTP 410; JWT gateway enabled; no admin code in the active function). The workflow is now manual-only to avoid running a disabled fixture service on every push. For a future hosted run, an authorized maintainer can temporarily deploy the reviewed `fixture-template.ts` with a renewed expiry, run the workflow on the feature branch, then disable it again. The normal CI continues running real local Supabase RLS tests.
 
 Physical Android testing and real email INBOX DELIVERY were not performed. Auth tokens/links in hosted acceptance were generated through the official admin API for synthetic test users; that proves Auth verification, not SMTP delivery.
 

@@ -1,7 +1,9 @@
+# The hosted admin fixture is disabled after acceptance. Before a deliberate rerun,
+# temporarily deploy the reviewed fixture-template.ts with renewed expiry; disable
+# it again afterwards. See docs/GUILD_EDITION_BETA.md. Local real RLS CI stays active.
 name: Hosted Tower beta acceptance
 on:
-  push:
-    branches: [feature/guild-supabase-foundation]
+  workflow_dispatch:
 permissions:
   contents: read
   id-token: write
