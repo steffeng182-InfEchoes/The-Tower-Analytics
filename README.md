@@ -32,3 +32,8 @@ npm run test:ocr-browser
 An existing browser can be supplied with `TOWER_CHROMIUM_EXECUTABLE`. An optional private test image can be supplied with `TOWER_PRIVATE_HISTORY_IMAGE`; it is never published or uploaded. The user's private image was also checked locally for six complete rows and both special-mode proposals. It is excluded from this repository.
 
 [Milestone acceptance, known limits and phone checks](docs/ACCOUNT_INTELLIGENCE.md) · [Reference data licence/provenance](docs/THIRD_PARTY_LICENSES.md) · [OCR fixture sources](tests/fixtures/SOURCES.md)
+
+
+## Guild Edition development
+
+WORK 05 is developed separately on `feature/guild-supabase-foundation`. Setup, verification limits, data protection and Android acceptance: [Guild beta candidate](docs/GUILD_EDITION_BETA.md). The current Pages Alpha remains unchanged until acceptance.

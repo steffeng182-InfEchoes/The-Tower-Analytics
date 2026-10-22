@@ -3,7 +3,7 @@
  function stable(value){if(Array.isArray(value))return '['+value.map(stable).join(',')+']';if(value&&typeof value==='object')return '{'+Object.keys(value).filter(k=>value[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+stable(value[k])).join(',')+'}';return JSON.stringify(value);}
  async function digest(value){const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(typeof value==='string'?value:stable(value)));return Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');}
  function canonical(text){return String(text||'').replace(/\r\n?/g,'\n').split('\n').map(s=>s.trim().replace(/\s+/g,' ')).filter(Boolean).join('\n');}
- async function key(store,row){return store==='runs'&&row.rawText?'report:'+await digest(canonical(row.rawText)):store+':'+row.id;}
+ async function key(store,row){return store==='runs'&&row.recordType!=='history-observation'&&row.rawText?'report:'+await digest(canonical(row.rawText)):store+':'+row.id;}
  function equivalent(a,b){return stable(a)===stable(b);}
  // Three-way merge. An absent baseline never authorizes replacing either original.
  function decision(local,remote,base){

@@ -9,6 +9,7 @@ async function run(){
  async function request(path,{token,method='GET',body}={}){const response=await fetch(url+path,{method,headers:{apikey:key,...(token?{Authorization:'Bearer '+token}:{}),'Content-Type':'application/json',Prefer:'return=representation'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(20000)});const text=await response.text();let data;try{data=JSON.parse(text);}catch{data=text;}return {status:response.status,ok:response.ok,data};}
  async function login(prefix){const r=await request('/auth/v1/token?grant_type=password',{method:'POST',body:{email:process.env[prefix+'_EMAIL'],password:process.env[prefix+'_PASSWORD']}});assert.ok(r.ok,'Independent Auth login failed');assert.ok(r.data.access_token&&r.data.user?.id);return {token:r.data.access_token,id:r.data.user.id};}
  const a=await login('TOWER_TEST_A'),b=await login('TOWER_TEST_B');assert.notEqual(a.id,b.id,'Two distinct users required');
+ const createdProfiles=[];
  const tag='rls-test:'+randomUUID(),tables=[['player_runs',{client_run_id:tag,source_hash:tag,run_data:{rawText:'RLS fixture',id:tag},deleted:false},'client_run_id'],['player_documents',{client_id:tag,kind:'profiles',document:{id:tag,name:'RLS fixture'},deleted:false},'client_id']];
  try{
   for(const [table,fields,keyColumn] of tables){
@@ -19,20 +20,27 @@ async function run(){
    assert.deepEqual((await request(cross,{token:a.token})).data,[],'Manipulated owner SELECT must be empty');
    assert.deepEqual((await request(cross,{token:a.token,method:'PATCH',body:fields})).data,[],'Cross-owner UPDATE must affect zero rows');
    assert.deepEqual((await request(cross,{token:a.token,method:'DELETE'})).data,[],'Cross-owner DELETE must affect zero rows');
-   assert.equal((await request('/rest/v1/'+table,{token:a.token,method:'POST',body:{...fields,[keyColumn]:tag+':forged',user_id:b.id}})).ok,false,'Forged owner INSERT denied');
-   assert.equal((await request('/rest/v1/'+table+filter,{token:a.token,method:'PATCH',body:{user_id:b.id}})).ok,false,'Owner reassignment denied');
+   assert.equal((await request('/rest/v1/'+table,{token:a.token,method:'POST',body:{...fields,[keyColumn]:tag+':forged',...(table==='player_runs'?{source_hash:tag+':forged'}:{}),user_id:b.id}})).ok,false,'Forged owner INSERT denied');
+   assert.equal((await request('/rest/v1/'+table+filter,{token:a.token,method:'PATCH',body:{user_id:b.id,[keyColumn]:tag+':reassigned',...(table==='player_runs'?{source_hash:tag+':reassigned'}:{})}})).ok,false,'Owner reassignment denied');
    assert.equal((await request('/rest/v1/'+table,{token:a.token,method:'POST',body:{...fields,user_id:a.id}})).status,409,'Duplicate insert rejected');
    const revision=own.data[0].revision;const update=await request('/rest/v1/'+table+filter+'&revision=eq.'+revision,{token:a.token,method:'PATCH',body:fields});assert.ok(update.ok);assert.equal(update.data[0].revision,revision+1);
    assert.deepEqual((await request('/rest/v1/'+table+filter+'&revision=eq.'+revision,{token:a.token,method:'PATCH',body:fields})).data,[],'Stale revision rejected');
    assert.equal((await request('/rest/v1/'+table+filter)).ok,false,'Anonymous read denied');
    assert.equal((await request('/rest/v1/'+table+filter,{token:b.token})).data.length,1,'Other user original survived all attacks');
   }
-  // Profile table: use existing rows without altering their values, verify cross-account visibility.
-  for(const u of [a,b]){const profile=await request('/rest/v1/player_profiles?user_id=eq.'+u.id,{token:u.token});assert.ok(profile.ok);}
-  assert.deepEqual((await request('/rest/v1/player_profiles?user_id=eq.'+b.id,{token:a.token})).data,[]);
+  // Preserve existing test-account profiles; create temporary profiles only when missing.
+  for(const u of [a,b]){let profile=await request('/rest/v1/player_profiles?user_id=eq.'+u.id,{token:u.token});assert.ok(profile.ok);if(!profile.data.length){profile=await request('/rest/v1/player_profiles',{token:u.token,method:'POST',body:{user_id:u.id,display_name:'RLS fixture'}});assert.ok(profile.ok);createdProfiles.push(u);}assert.equal(profile.data.length,1);const ownUpdate=await request('/rest/v1/player_profiles?user_id=eq.'+u.id,{token:u.token,method:'PATCH',body:{display_name:profile.data[0].display_name}});assert.equal(ownUpdate.data.length,1);}
+  const profileTarget='/rest/v1/player_profiles?user_id=eq.'+b.id;
+  assert.deepEqual((await request(profileTarget,{token:a.token})).data,[]);
+  assert.deepEqual((await request(profileTarget,{token:a.token,method:'PATCH',body:{display_name:'forged'}})).data,[]);
+  assert.deepEqual((await request(profileTarget,{token:a.token,method:'DELETE'})).data,[]);
+  const forgedProfile=await request('/rest/v1/player_profiles',{token:a.token,method:'POST',body:{user_id:randomUUID(),display_name:'forged'}});assert.equal(forgedProfile.status,403,'RLS must reject forged profile before FK checking');
+  const health=await request('/rest/v1/rpc/tower_health',{token:a.token,method:'POST',body:{}});assert.ok(health.ok);assert.equal(health.data.database,true);assert.equal(health.data.schema,'guild-v1');
+  assert.equal((await request('/rest/v1/rpc/tower_health',{method:'POST',body:{}})).ok,false,'Anonymous health RPC denied');
   console.log('PASS: two real Auth users; private CRUD, forged ownership, cross-account attacks, duplicate prevention and optimistic revisions.');
  }finally{
-  for(const u of [a,b]){for(const [table,,keyColumn] of tables)for(const id of [tag,tag+':forged']){const cleanup=await request('/rest/v1/'+table+'?'+keyColumn+'=eq.'+encodeURIComponent(id),{token:u.token,method:'DELETE'});if(!cleanup.ok)console.error('Test-row cleanup failed: '+table);}await request('/auth/v1/logout?scope=local',{token:u.token,method:'POST'});}
+  for(const u of createdProfiles)await request('/rest/v1/player_profiles?user_id=eq.'+u.id,{token:u.token,method:'DELETE'});
+  for(const u of [a,b]){for(const [table,,keyColumn] of tables)for(const id of [tag,tag+':forged',tag+':reassigned']){const cleanup=await request('/rest/v1/'+table+'?'+keyColumn+'=eq.'+encodeURIComponent(id),{token:u.token,method:'DELETE'});if(!cleanup.ok)console.error('Test-row cleanup failed: '+table);}await request('/auth/v1/logout?scope=local',{token:u.token,method:'POST'});}
  }
 }
 module.exports={run};
