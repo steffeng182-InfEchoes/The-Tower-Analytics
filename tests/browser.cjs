@@ -6,7 +6,7 @@ const http=require('node:http');
 const html=fs.readFileSync('index.html');
 const report=(day=17,wave=2632)=>`Battle Report\nBattle Date Oct ${day}, 2026 10:02 PM\nReal Time 4h 51m 17s\nTier 4\nWave ${wave}\nCoins Earned 274,31M\nCoins Per Hour 56,50M\nCells Earned 1,43K`;
 (async()=>{
- const server=http.createServer((req,res)=>{const path=new URL(req.url,'http://localhost').pathname;if(path.startsWith('/guild/')&&/^\/guild\/[a-z]+\.js$/.test(path)){try{res.setHeader('Content-Type','application/javascript');res.end(fs.readFileSync('.'+path));}catch{res.writeHead(404);res.end();}}else{res.setHeader('Content-Type','text/html');res.end(html);}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const server=http.createServer((req,res)=>{const path=new URL(req.url,'http://localhost').pathname;if(path.startsWith('/guild/')&&/^\/guild\/[a-z0-9]+\.js$/.test(path)){try{res.setHeader('Content-Type','application/javascript');res.end(fs.readFileSync('.'+path));}catch{res.writeHead(404);res.end();}}else{res.setHeader('Content-Type','text/html');res.end(html);}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const launch={headless:true};if(process.env.TOWER_CHROMIUM_EXECUTABLE){launch.executablePath=process.env.TOWER_CHROMIUM_EXECUTABLE;launch.args=['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--no-zygote'];}
  let browser;try{
  browser=await chromium.launch(launch);const page=await browser.newPage({viewport:{width:384,height:400},timezoneId:'Europe/Berlin'}),errors=[];page.on('pageerror',e=>errors.push(e.message));

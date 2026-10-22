@@ -12,7 +12,9 @@
  async function create(config){
   if(!validateConfig(config))return null;
   // Pinned SDK, loaded only for configured cloud mode. Local mode has no CDN dependency.
-  const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm');
+  if(typeof navigator!=='undefined'&&!navigator.onLine)throw TypeError('Offline');
+  let timer;let sdk;try{sdk=await Promise.race([import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm'),new Promise((_,reject)=>{timer=setTimeout(()=>reject(TypeError('Cloud SDK unavailable')),8000);})]);}finally{clearTimeout(timer);}
+  const {createClient}=sdk;
   const storageKey='tower-guild-auth-'+new URL(config.url).hostname.split('.')[0];
   return createClient(config.url,config.publishableKey,{
    auth:{storageKey,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'},
