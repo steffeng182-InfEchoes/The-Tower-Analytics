@@ -13,7 +13,15 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: npx playwright install --with-deps chromium
+      - run: npm run test:account
+      - run: npx playwright install chromium
       - run: npm run test:browser
       - run: npm run test:ocr
       - run: npm run test:ocr-browser
+
+      - run: npm run test:account-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: account-intelligence-browser-evidence
+          path: test-results/
