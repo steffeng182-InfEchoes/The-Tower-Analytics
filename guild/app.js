@@ -11,7 +11,7 @@
  function mask(){document.querySelector('#view')?.replaceChildren();bridge?.clear();}
  function scopeChange(id){mask();set('tower-guild-mode','isolated');if(id)set('tower-guild-owner',id);else localStorage.removeItem('tower-guild-owner');location.reload();}
  function errorMessage(e){if(['cloudConfig','backupRequired','sessionExpired','changed','localDuplicate'].includes(e?.message))return t(e.message);if(e?.status===401||e?.code==='PGRST301')return t('sessionExpired');if(e?.name==='TypeError'||e?.name==='TimeoutError')return t('network');return t('cloudError');}
- async function perform(fn){if(busy)return;busy=true;status=t('busy');render();try{await fn();}catch(e){status=errorMessage(e);}finally{busy=false;render();}}
+ async function perform(fn){if(busy||locked())return;busy=true;status=t('busy');render();try{await fn();}catch(e){status=errorMessage(e);}finally{busy=false;render();}}
  async function init(){
   try{client=await root.TowerCloud.create(root.TOWER_CLOUD_CONFIG);}catch(e){status=errorMessage(e);}
   if(client){
@@ -27,8 +27,9 @@
     session=next;queueMicrotask(render);
    });
   }
+  if(!client&&!navigator.onLine&&/^[0-9a-f-]{36}$/.test(get('tower-guild-owner')||'')){owner=get('tower-guild-owner');scope='account';}
   if(!owner&&get('tower-guild-mode')==='isolated')scope='guest';
-  root.addEventListener('storage',event=>{if(event.key?.includes('tower-guild')||event.key?.includes('tower-guild-auth')){mask();location.reload();}});
+  root.addEventListener('storage',event=>{if(event.key==='tower-guild-mode'||event.key==='tower-guild-owner'||event.key?.startsWith('tower-guild-auth-')){mask();location.reload();}});
   root.addEventListener('online',()=>{status='';render();});root.addEventListener('offline',render);
   return databaseName();
  }
@@ -42,7 +43,7 @@
   const wasOpen=panel.querySelector('details')?.open||!get('tower-language');
   panel.innerHTML='<details '+(wasOpen?'open':'')+'><summary>'+t('guild')+' · '+escape(text)+'</summary><label for="guild-language">'+t('language')+'</label><select id="guild-language"><option value="de">Deutsch</option><option value="en">English</option></select><p class="small">'+t(navigator.onLine?'online':'offline')+'</p>'+(client?(signed?'<p data-user-content>'+escape(session?.user?.email||owner)+'</p><div class="buttonrow">'+button('guild-logout','logout')+button('guild-sync','sync')+button('guild-migration','migrate')+'</div><label for="guild-name">'+t('profile')+'</label><input id="guild-name" maxlength="60" autocomplete="nickname"><div class="buttonrow">'+button('guild-profile','saveProfile')+'</div>':'<form id="guild-login"><label for="guild-email">'+t('email')+'</label><input id="guild-email" type="email" autocomplete="email" required><label class="review-check"><input id="guild-register" type="checkbox">'+t('register')+'</label><button class="button primary" '+(busy?'disabled':'')+'>'+t('send')+'</button></form>'):'<p>'+t('notConfigured')+'</p>')+'<div class="buttonrow">'+button('guild-backup','backup')+(scope==='guest'?button('guild-local','openLocal'):'')+'</div><label for="guild-restore">'+(I.language==='de'?'Vollständiges Backup wiederherstellen':'Restore full backup')+'</label><input id="guild-restore" type="file" accept=".json,application/json"><div id="guild-migration-area"></div><p id="guild-status" role="status" aria-live="polite">'+escape(status)+'</p>'+(Object.keys(manifest.conflicts).length?'<div class="notice warn">'+t('conflicts')+' '+Object.keys(manifest.conflicts).length+'</div>'+button('guild-conflicts','exportConflicts'):'')+'</details>';
   panel.querySelector('#guild-language').value=I.language;
-  panel.querySelector('#guild-language').onchange=async e=>{const language=e.target.value;I.set(language);if(scope==='account')await write(bridge.db(),'profiles',{id:'__guild_settings__',recordType:'guild-settings',language});bridge.render();render();};
+  panel.querySelector('#guild-language').onchange=async e=>{if(busy||locked())return;const language=e.target.value;I.set(language);if(scope==='account')await write(bridge.db(),'profiles',{id:'__guild_settings__',recordType:'guild-settings',language});bridge.render();render();};
   const on=(id,fn)=>{const e=panel.querySelector('#'+id);if(e)e.onclick=()=>perform(fn);};
   on('guild-logout',async()=>{mask();scope='guest';owner=null;set('tower-guild-mode','isolated');localStorage.removeItem('tower-guild-owner');try{await client.auth.signOut({scope:'local'});}finally{location.reload();}});
   const form=panel.querySelector('#guild-login');if(form)form.onsubmit=e=>{e.preventDefault();const email=panel.querySelector('#guild-email').value,create=panel.querySelector('#guild-register').checked;perform(async()=>{const redirect=new URL(location.href);redirect.search='';redirect.hash='';const {error}=await client.auth.signInWithOtp({email,options:{shouldCreateUser:create,emailRedirectTo:redirect.href}});if(error)throw error;status=t('sent');});};
@@ -62,6 +63,9 @@
  async function sync(){
   const id=await authenticated(),db=bridge.db();manifest=await getManifest();
   const lock=async()=>{
+   const token=crypto.randomUUID();set('tower-sync-lock:'+id,JSON.stringify({token,until:Date.now()+120000}));
+   const heartbeat=setInterval(()=>set('tower-sync-lock:'+id,JSON.stringify({token,until:Date.now()+120000})),30000);
+   try{manifest=await getManifest();
    const local=[];for(const store of stores)for(const data of await read(db,store))if((!data.recordType||data.recordType==='guild-settings')&&!data.guildSeed)local.push({store,data});
    const initial=S.stable(local),remote=await allRemote(id);checkOwner(id);
    // Re-read after network I/O; user edits must never be overwritten by an old snapshot.
@@ -76,6 +80,7 @@
      const {data,error}=await query.select();if(error)throw error;if(data.length!==1)throw Error('changed');return {...row,revision:data[0].revision};
     }});
    checkOwner(id);const settings=(await read(db,'profiles')).find(p=>p.id==='__guild_settings__');if(settings)I.set(settings.language);await bridge.reloadProfiles();await bridge.refresh();status=t('synced')+': ↑'+result.pushed+' ↓'+result.pulled+' · '+t('conflicts').split(':')[0]+' '+result.conflicts;return result;
+   }finally{clearInterval(heartbeat);localStorage.removeItem('tower-sync-lock:'+id);}
   };
   // Every writer in this app uses this lock; other tabs lock the workspace read-only during sync.
   root.document.documentElement.classList.add('guild-syncing');
@@ -106,5 +111,6 @@
    });
   };
  }
- const api={init,bind,databaseName,render,sync,get scope(){return scope;},get busy(){return busy;},get owner(){return owner;}};root.TowerGuild=api;
+ function locked(){try{const value=JSON.parse(get('tower-sync-lock:'+owner)||'null');return !!value&&value.until>Date.now();}catch{return true;}}
+ const api={init,bind,databaseName,render,sync,get locked(){return locked();},get scope(){return scope;},get busy(){return busy;},get owner(){return owner;}};root.TowerGuild=api;
 })(window);

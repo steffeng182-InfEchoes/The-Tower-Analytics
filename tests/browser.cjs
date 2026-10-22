@@ -10,7 +10,7 @@ const report=(day=17,wave=2632)=>`Battle Report\nBattle Date Oct ${day}, 2026 10
  const launch={headless:true};if(process.env.TOWER_CHROMIUM_EXECUTABLE){launch.executablePath=process.env.TOWER_CHROMIUM_EXECUTABLE;launch.args=['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--no-zygote'];}
  let browser;try{
  browser=await chromium.launch(launch);const page=await browser.newPage({viewport:{width:384,height:400},timezoneId:'Europe/Berlin'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.addInitScript(()=>{if(!localStorage.getItem('tower-language'))localStorage.setItem('tower-language','de');});const url=`http://127.0.0.1:${server.address().port}`;await page.goto(url);await page.waitForSelector('#view h1');
+ await page.addInitScript(()=>{if(!localStorage.getItem('tower-language'))localStorage.setItem('tower-language','de');});const url=`http://127.0.0.1:${server.address().port}`;await page.goto(url);try{await page.waitForSelector('#view h1');}catch(error){console.error('Startup diagnostic:',await page.locator('#view').textContent(),errors);throw error;}
  const tab=async name=>{await page.locator(`#bottomnav [data-tab="${name}"]`).click();};
  for(const size of [{width:320,height:360},{width:384,height:400},{width:412,height:460}]){await page.setViewportSize(size);for(const t of ['account','dashboard','import','runs','diagnostics','data']){await tab(t);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${t} at ${size.width}`);}}
 

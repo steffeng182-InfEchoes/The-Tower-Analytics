@@ -15,7 +15,7 @@
  function set(value){if(!['de','en'].includes(value))return;language=value;try{localStorage.setItem('tower-language',value);}catch{}root.document?.documentElement.setAttribute('lang',value);}
  function apply(node){if(!node)return;root.document.documentElement.lang=language;if(language!=='en')return;
   const walker=root.document.createTreeWalker(node,4);let text;while(text=walker.nextNode()){
-   if(text.parentElement?.closest('textarea,pre,input,[data-user-content],#guild-panel'))continue;
+   if(text.parentElement?.closest('textarea,pre,input,#profile-select,[data-user-content],#guild-panel'))continue;
    const trimmed=text.nodeValue.trim();if(legacy[trimmed])text.nodeValue=text.nodeValue.replace(trimmed,legacy[trimmed]);
   }
  }
