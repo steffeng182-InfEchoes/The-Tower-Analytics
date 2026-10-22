@@ -1,5 +1,7 @@
 # Guild Edition – implementation contract
 
+Implemented on the feature branch. Hosted Tower project: `tzgbsiwchzrkvntcnikx` (Free, Frankfurt); foundation migration applied and hosted two-user Auth/RLS acceptance passed. Current operational facts and acceptance limits: [GUILD_EDITION_BETA.md](GUILD_EDITION_BETA.md).
+
 **Branch:** `feature/guild-supabase-foundation` (not live). Existing GitHub Pages app and browser IndexedDB are unchanged.
 
 ## Scope

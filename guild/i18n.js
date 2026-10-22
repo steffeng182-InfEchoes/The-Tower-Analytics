@@ -11,6 +11,8 @@
  };
  let language='de';try{language=localStorage.getItem('tower-language')||'de';}catch{}
  if(!['de','en'].includes(language))language='de';
+ messages.emailNotAvailable=['Für diese Adresse ist der E-Mail-Versand beim Anbieter noch nicht freigeschaltet. Bitte wende dich an den Gildenorganisator.','The email provider has not enabled delivery to this address yet. Please contact your guild organizer.'];
+ messages.emailRateLimit=['Das E-Mail-Anfragelimit ist erreicht. Bitte später erneut versuchen.','The email request limit has been reached. Please try again later.'];
  messages.loginCode=['E-Mail-Code oder Bestätigungslink','Email code or confirmation link'];
  messages.verifyCode=['Anmeldung bestätigen','Confirm sign-in'];
  messages.codeHelp=['Du kannst den Einmalcode oder den vollständigen Bestätigungslink aus deiner E-Mail hier einfügen. Der Link lässt sich so auch ohne Browserwechsel bestätigen.','Paste the one-time code or the complete confirmation link from your email. This also confirms a link without switching browsers.'];

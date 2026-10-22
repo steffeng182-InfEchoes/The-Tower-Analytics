@@ -10,7 +10,7 @@
  function set(key,value){localStorage.setItem(key,value);}
  function mask(){document.querySelector('#view')?.replaceChildren();bridge?.clear();}
  function scopeChange(id){changing=true;mask();set('tower-guild-mode','isolated');if(id)set('tower-guild-owner',id);else localStorage.removeItem('tower-guild-owner');location.reload();}
- function errorMessage(e){if(['cloudConfig','backupRequired','sessionExpired','changed','localDuplicate','syncUnsupported','invalidLoginCode'].includes(e?.message))return t(e.message);if(['otp_expired','otp_disabled','invalid_credentials','validation_failed'].includes(e?.code))return t('invalidLoginCode');if(e?.status===401||e?.code==='PGRST301')return t('sessionExpired');if(e?.name==='TypeError'||e?.name==='TimeoutError')return t('network');return t('cloudError');}
+ function errorMessage(e){if(e?.code==='email_address_not_authorized')return t('emailNotAvailable');if(e?.status===429||['over_email_send_rate_limit','over_request_rate_limit'].includes(e?.code))return t('emailRateLimit');if(['cloudConfig','backupRequired','sessionExpired','changed','localDuplicate','syncUnsupported','invalidLoginCode'].includes(e?.message))return t(e.message);if(['otp_expired','otp_disabled','invalid_credentials','validation_failed'].includes(e?.code))return t('invalidLoginCode');if(e?.status===401||e?.code==='PGRST301')return t('sessionExpired');if(e?.name==='TypeError'||e?.name==='TimeoutError')return t('network');return t('cloudError');}
  async function perform(fn){if(busy||locked())return;busy=true;status=t('busy');render();try{await fn();}catch(e){status=errorMessage(e);}finally{busy=false;render();}}
  async function init(){
   try{client=await root.TowerCloud.create(root.TOWER_CLOUD_CONFIG);}catch(e){status=errorMessage(e);}
