@@ -2,3 +2,7 @@ node_modules/
 test-results/
 
 *.traineddata
+
+
+/node_modules
+/dist/

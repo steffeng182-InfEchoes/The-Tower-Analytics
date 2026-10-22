@@ -1,10 +1,14 @@
 name: Critical data paths
 on: [push, pull_request]
+concurrency:
+  group: account-checks-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
   regression:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -13,7 +17,20 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: npx playwright install --with-deps chromium
+      - run: npm run test:account
+      - run: npx playwright install chromium
       - run: npm run test:browser
       - run: npm run test:ocr
       - run: npm run test:ocr-browser
+
+      - run: npm run test:account-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: account-intelligence-browser-evidence
+          path: test-results/
+      - run: node scripts/build-account-beta.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: account-intelligence-beta
+          path: dist/

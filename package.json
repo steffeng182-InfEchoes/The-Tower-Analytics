@@ -6,7 +6,9 @@
     "test": "TZ=Europe/Berlin node --test tests/*.test.cjs",
     "test:browser": "node tests/browser.cjs",
     "test:ocr": "node tests/ocr.cjs",
-    "test:ocr-browser": "node tests/ocr-browser.cjs"
+    "test:ocr-browser": "node tests/ocr-browser.cjs",
+    "test:account": "node --test tests/account/*.test.cjs",
+    "test:account-browser": "node tests/account/browser.cjs"
   },
   "repository": {
     "type": "git",
