@@ -14,12 +14,46 @@
  messages.farmingScope=['Farming: {normal} von {total} Runs. Nicht berücksichtigt: {tournament} Tournament · {dissonance} Dissonanz · {unknown} Modus unbekannt / widersprüchlich. Unvollständige Normalruns: {invalid}. Unbekannte Modi unter „Strategie / Modus“ prüfen; Tages-/Nachtstrategie bestätigt keinen Normalmodus.','Farming: {normal} of {total} runs. Excluded: {tournament} Tournament · {dissonance} Dissonance · {unknown} unknown / conflicting mode. Incomplete normal runs: {invalid}. Review unknown modes under “Strategy / mode”; day/night strategy does not confirm normal mode.'];
  Object.assign(legacy,{'Run-Strategie':'Run strategy','Dissonanz-Art (nur bei Dissonanz)':'Dissonance type (Dissonance only)','Modus unbekannt':'Unknown mode','Modus widersprüchlich':'Conflicting mode','Kontext bestätigen':'Confirm context','Tag / aktiv':'Day / active','Nacht / AFK':'Night / AFK','manuell bestätigt':'manually confirmed','automatisch aus Report':'detected from report','unbekannt':'unknown','Datum unbekannt':'Unknown date','gewichtet':'weighted'});
  function t(key,values={}){return (messages[key]?.[language==='en'?1:0]||key).replace(/\{(\w+)\}/g,(match,name)=>String(values[name]??match));}
+ Object.assign(legacy,{
+  'Real Time muss größer als null sein.':'Real Time must be greater than zero.',
+  'Battle Date nicht erkannt; Datum bleibt unbekannt.':'Battle Date was not recognized; the date remains unknown.',
+  'Battle Date fehlt. Historisches Datum bleibt unbekannt.':'Battle Date is missing. The historical date remains unknown.',
+  'Bitte Battle-Report-Text einfügen. Bilddateien gehören in den separaten Screenshot-Import.':'Paste Battle Report text. Use the separate screenshot import for images.',
+  'Korrigiere den Originaltext oben und drücke erneut „Analysieren & speichern“. Bei unbekanntem Datum kannst du den gültigen Report ausdrücklich trotzdem speichern.':'Correct the original text above and press “Analyze & save” again. If the date is unknown, you can explicitly save the otherwise valid report.',
+  'Nur TXT-Dateien mit Battle-Report-Text. Für Bilder bitte den separaten History- oder Account-Import verwenden.':'Only TXT files containing Battle Report text. Use the separate History or Account import for images.',
+  'Die Datei ist größer als 5 MB.':'The file exceeds 5 MB.',
+  'Keine gültige Battle-Report-Textdatei. Bilder bitte separat importieren.':'Invalid Battle Report text file. Import images separately.',
+  'Reports werden geprüft und importiert …':'Checking and importing reports …',
+  'Run-Datum und Uhrzeit (JJJJ-MM-TT HH:MM), leer = unbekannt':'Run date and time (YYYY-MM-DD HH:MM), leave blank for unknown',
+  'Format: JJJJ-MM-TT HH:MM':'Format: YYYY-MM-DD HH:MM',
+  'Ungültiges Datum':'Invalid date',
+  '✓ Run-Datum aktualisiert.':'✓ Run date updated.',
+  '✓ Run-Kontext bestätigt.':'✓ Run context confirmed.',
+  'Widerspruch zum bisherigen Modus / Report. Die bisherige Angabe bleibt im Kontextverlauf erhalten. Änderung ausdrücklich bestätigen?':'This conflicts with the previous mode or report. The previous value is kept in the context history. Explicitly confirm this change?',
+  'Geprüfte Zuordnungen übernehmen':'Save reviewed matches',
+  'Offene History ohne Report speichern':'Save unmatched History',
+  'Zeitlicher Nachtanteil beweist kein AFK. Dissonanz-Arten:':'Night overlap does not prove AFK play. Dissonance types:',
+  'offizielle v28-Patchnotes':'official v28 patch notes',
+  '. Bonusformel / Modifikatoren nicht ausreichend primär belegt; keine Bonusberechnung.':'. Bonus formula / modifiers are not sufficiently documented by primary sources; no bonus calculation.',
+  'Tag / Aktiv':'Day / active','Nacht / AFK (Legacy)':'Night / AFK (legacy)',
+  'Nicht angegeben / unbekannt':'Not specified / unknown'
+ });
+ const patterns=[
+  [/^Nicht erkannt: (.*)$/s,'Unrecognized: $1'],[/^Doppeltes Kopffeld: (.*)$/s,'Duplicate header field: $1'],[/^Ungültiger Wert: (.*)$/s,'Invalid value: $1'],[/^Pflichtfeld fehlt: (.*)$/s,'Missing required field: $1'],
+  [/^(Coins\/h|Cells\/h) widerspricht Ertrag \/ Real Time; bitte Originalwerte prüfen\.$/,'$1 conflicts with earnings / Real Time; check the original values.'],
+  [/^✓ Sammelimport: (\d+) neu, (\d+) doppelt, (\d+) ungültig \(von (\d+)\)\.$/,'✓ Batch import: $1 new, $2 duplicate, $3 invalid (of $4).'],
+  [/^Import fehlgeschlagen: (.*)$/s,'Import failed: $1'],[/^Speichern fehlgeschlagen: (.*)$/s,'Save failed: $1'],
+  [/^Strategie: /,'Strategy: '],[/^Modus: /,'Mode: '],
+  [/^(.*) · gewichtete Tageswerte$/,'$1 · weighted daily values']
+ ];
+ function legacyText(value){if(language!=='en')return value;let result=legacy[value]||value;for(const [pattern,replacement] of patterns)result=result.replace(pattern,replacement);return result;}
  function set(value){if(!['de','en'].includes(value))return;language=value;try{localStorage.setItem('tower-language',value);}catch{}root.document?.documentElement.setAttribute('lang',value);}
  function apply(node){if(!node)return;root.document.documentElement.lang=language;if(language!=='en')return;
   const walker=root.document.createTreeWalker(node,4);let text;while(text=walker.nextNode()){
    if(text.parentElement?.closest('textarea,pre,input,#profile-select,[data-user-content],#guild-panel'))continue;
-   const trimmed=text.nodeValue.trim();if(legacy[trimmed])text.nodeValue=text.nodeValue.replace(trimmed,legacy[trimmed]);
+   const trimmed=text.nodeValue.trim(),translated=legacyText(trimmed);if(translated!==trimmed)text.nodeValue=text.nodeValue.replace(trimmed,translated);
   }
  }
- const api={t,set,apply,get language(){return language;},messages,legacy};root.TowerI18n=api;if(typeof module!=='undefined')module.exports=api;
+ for(const name of ['alert','confirm','prompt'])if(typeof root[name]==='function'){const original=root[name].bind(root);root[name]=(message,...rest)=>original(legacyText(String(message)),...rest);}
+ const api={t,set,apply,legacyText,get language(){return language;},messages,legacy};root.TowerI18n=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);

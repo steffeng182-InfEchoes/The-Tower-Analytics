@@ -34,7 +34,7 @@
   return databaseName();
  }
  function databaseName(){return scope==='legacy'?'tower-analytics-alpha':scope==='account'?'tower-analytics-guild-'+owner:'tower-analytics-guild-signed-out';}
- async function bind(appBridge){bridge=appBridge;manifest=await getManifest();render();}
+ async function bind(appBridge){bridge=appBridge;manifest=await getManifest();new MutationObserver(changes=>{for(const change of changes)for(const node of change.addedNodes)I.apply(node.nodeType===3?node.parentElement:node);}).observe(document.querySelector('#view'),{childList:true,subtree:true});render();}
  function escape(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
  function button(id,key){return '<button class="button" id="'+id+'" '+(busy?'disabled':'')+'>'+t(key)+'</button>';}
  function render(){
