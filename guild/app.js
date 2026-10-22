@@ -114,8 +114,9 @@
     const semantic=row=>{const copy={...row};for(const field of ['id','playerId','importedAt','sourceHash'])delete copy[field];return S.stable(copy);};
     for(const item of batch)if(item.store==='runs'&&item.data.rawText){const duplicate=reportKeys.get(await S.key('runs',item.data));if(duplicate&&duplicate.id!==item.data.id){if(semantic(duplicate)!==semantic(item.data))throw Error('localDuplicate');item.data=duplicate;}}
     await new Promise((ok,no)=>{const tx=db.transaction(stores,'readwrite');for(const row of batch)if(!existing[row.store].has(row.data.id))tx.objectStore(row.store).add(row.data);tx.oncomplete=ok;tx.onerror=()=>no(tx.error);tx.onabort=()=>no(tx.error||Error('changed'));});
-    const result=await sync();if(result.conflicts)throw Error('changed');const actual=await allRemote(id);
-    for(const row of batch){const k=await S.key(row.store,row.data),local=(await read(db,row.store)).find(r=>r.id===row.data.id),cloud=actual.find(r=>r.key===k&&!r.deleted);if(!local||!cloud||!S.equivalent(local,cloud.data))throw Error('changed');}
+    const result=await sync();if(result.conflicts)throw Error('changed');const actual=new Map((await allRemote(id)).map(row=>[row.key,row]));
+    const verified={};for(const store of stores)verified[store]=new Map((await read(db,store)).map(row=>[row.id,row]));
+    for(const row of batch){const k=await S.key(row.store,row.data),local=verified[row.store].get(row.data.id),cloud=actual.get(k);if(!local||!cloud||cloud.deleted||!S.equivalent(local,cloud.data))throw Error('changed');}
     await bridge.reloadProfiles();await bridge.refresh();status=t('migrationDone');
    });
   };
