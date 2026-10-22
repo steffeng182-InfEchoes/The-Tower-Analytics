@@ -16,6 +16,7 @@
  const LABELS={lab_speed:'Lab Speed',attack_speed:'Attack Speed',coins_per_kill:'Coins / Kill',coins:'Coins',critical_factor:'Critical Factor',damage:'Damage',health:'Health',orb_speed:'Orb Speed'};
  const ALIASES={'lab.orbs_speed':['Orb Speed'],'lab.death_wave_health':['DW Health'],'lab.speed':['Labs Speed','Forschungsgeschwindigkeit'],'lab.critical_factor':['Crit Factor']};
  const confirmed=e=>e.valueType!=='observed'&&e.valueType!=='estimated'&&e.sourceType!=='ocr-unconfirmed'&&e.confirmationStatus!=='pending';
+ function ownership(entry){const value=String(entry.value||'').trim().toLowerCase();if(['owned','yes','true','1','ja','besitz','vorhanden','im besitz'].includes(value))return true;if(['not-owned','not owned','no','false','0','nein','nicht im besitz','nicht vorhanden'].includes(value))return false;return null;}
  const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
  const stamp=e=>e.effectiveAt||e.updatedAt;
  function current(entries,at=Date.now()){const map=new Map();for(const e of entries){const time=Date.parse(stamp(e));if(!confirmed(e)||!Number.isFinite(time)||time>at)continue;const key=e.category+'|'+(e.knowledgeId||norm(e.name));const old=map.get(key);if(!old||time>Date.parse(stamp(old))||time===Date.parse(stamp(old))&&((e.revision||0)>(old.revision||0)||(e.revision||0)===(old.revision||0)&&String(e.updatedAt||e.id)>String(old.updatedAt||old.id)))map.set(key,e);}return [...map.values()];}
@@ -66,8 +67,8 @@
     const value=Number((rule.base+rule.step*level).toFixed(9)),visible=number(e.confirmedEffect);if(visible&&(visible.percent||Math.abs(visible.value-value)>.011)){issues.push({entry:e,reason:'Bestätigter sichtbarer Effekt widerspricht Level/Formel'});continue;}
     contributions.push({entry:e,effect:rule.effect,value,operation:rule.unit==='flat'?'lab-add':'lab-factor',source:SOURCE,rule:rule.base+' + '+rule.step+' × '+level});
    }else if(e.category==='Relics'){
-    if(/^(?:not-owned|no|false|0|nicht)/i.test(e.value))continue;
-    if(!/^(?:owned|yes|true|1|ja|besitz|vorhanden)$/i.test(e.value)){unknown.push({entry:e,reason:'Besitzangabe nicht eindeutig'});continue;}
+    if(ownership(e)===false)continue;
+    if(ownership(e)!==true){unknown.push({entry:e,reason:'Besitzangabe nicht eindeutig'});continue;}
     const effect=Object.keys(LABELS).find(id=>norm(LABELS[id])===norm(k.bonusType)||id==='critical_factor'&&norm(k.bonusType)==='critfactor');const bonus=number(k.bonusValue);
     if(!effect||!bonus?.percent){unknown.push({entry:e,reason:'Bonusart oder Rechenregel noch nicht unterstützt'});continue;}
     const visible=number(e.confirmedEffect);if(visible&&(!visible.percent||Math.abs(visible.value-bonus.value)>.001)){issues.push({entry:e,reason:'Relic-Bonus widerspricht versionierter Quelle'});continue;}
@@ -81,5 +82,5 @@
    return {effect,label:LABELS[effect],parts,value,expression,complete:false,scope:effect==='lab_speed'?'Bekannter Teilbonus für andere Labs; Lab-Speed-Forschung selbst benötigt eine eigene Zeitregel. Weitere Beschleunigungen fehlen.':'Bekannter Teilbonus; kein vollständiger Kampf-Endwert',stackSource:STACK_SOURCE};});
   return {version:VERSION,selected,contributions,effects,unknown,issues};
  }
- return {VERSION,SOURCE,STACK_SOURCE,RULES,LABELS,ALIASES,current,confirmed,parse,recognize,prepare,calculate,number};
+ return {VERSION,SOURCE,STACK_SOURCE,RULES,LABELS,ALIASES,current,confirmed,ownership,parse,recognize,prepare,calculate,number};
 });
