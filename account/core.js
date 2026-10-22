@@ -23,7 +23,7 @@
  function matching(text,catalog){const options=[];for(const k of catalog)for(const label of [k.name,...k.aliases||[]]){const escaped=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const m=new RegExp('(^|[^a-z])('+escaped+')(?![a-z])','i').exec(text);if(m)options.push({k,index:m.index+m[1].length,end:m.index+m[0].length,label});}return options.sort((a,b)=>b.label.length-a.label.length)[0];}
  function parse(text,category,catalog){
   const lines=String(text).split(/\r?\n/).map(x=>x.trim()).filter(Boolean),known=catalogue(catalog,category),anchors=[];
-  for(let i=0;i<lines.length;i++){let found=matching(lines[i],known);if(!found&&i+1<lines.length){const both=matching(lines[i]+' '+lines[i+1],known);if(both&&both.end>lines[i].length)found=both;}if(found)anchors.push({...found,i});}
+  for(let i=0;i<lines.length;i++){let found=matching(lines[i],known);if(!found&&i+1<lines.length){const both=matching(lines[i]+' '+lines[i+1],known);if(both&&both.index<lines[i].length&&both.end>lines[i].length)found=both;}if(found)anchors.push({...found,i});}
   const proposals=[];
   for(let a=0;a<anchors.length;a++){
    const row=anchors[a],end=Math.min(anchors[a+1]?.i??lines.length,row.i+5),region=lines.slice(row.i,end).join(' '),tail=region.slice(row.end),explicit=tail.match(/\b(?:lv[l]?|level|stufe)\.?\s*[:#]?\s*(\d{1,3})(?:\s*\/\s*(\d{1,3}))?/i);
@@ -50,8 +50,8 @@
   const seen=new Set(),prepared=[],previous=current(entries.filter(e=>e.playerId===playerId));
   for(const row of rows){const k=catalog.find(k=>k.id===row.knowledgeId&&k.category===row.category);if(!k||!['Labs','Relics'].includes(k.category))throw Error('Unbekannter Spieleintrag.');if(seen.has(k.id))throw Error('Doppelter Eintrag in dieser Bestätigung.');seen.add(k.id);
    let value;if(k.category==='Labs'){if(row.level===null||row.level===''||!Number.isInteger(Number(row.level))||Number(row.level)<0||Number(row.level)>(k.maxLevel??999))throw Error(k.name+': aktuelles ganzzahliges Level am Original prüfen.');value=String(Number(row.level));}else{if(typeof row.owned!=='boolean')throw Error(k.name+': Besitz ausdrücklich wählen.');value=row.owned?'owned':'not-owned';}
-   const effectRaw=String(row.effectRaw||'').trim();if(effectRaw&&!number(effectRaw))throw Error(k.name+': Effekt als x1.20, +2.00 oder 2% eintragen.');
-   const old=previous.find(e=>e.knowledgeId===k.id);if(old&&old.value===value&&String(old.confirmedEffect||'')===effectRaw&&String(old.researchStatus||'unknown')===String(row.researchStatus||'unknown'))continue;
+   let effectRaw=String(row.effectRaw||'').trim();if(effectRaw&&!number(effectRaw))throw Error(k.name+': Effekt als x1.20, +2.00 oder 2% eintragen.');
+   const old=previous.find(e=>e.knowledgeId===k.id);if(!effectRaw&&old?.value===value)effectRaw=old.confirmedEffect||'';if(old&&old.value===value&&String(old.confirmedEffect||'')===effectRaw&&String(old.researchStatus||'unknown')===String(row.researchStatus||'unknown'))continue;
    if(k.category==='Labs'&&old&&/^\d+$/.test(old.value)&&Number(value)<Number(old.value)&&!row.allowDecrease)throw Error(k.name+': niedrigeres Level benötigt ausdrückliche Korrekturfreigabe.');
    prepared.push({id:makeId(),playerId,category:k.category,knowledgeId:k.id,name:k.name,value,valueType:'confirmed',confirmationStatus:'confirmed',schemaVersion:2,confirmedEffect:effectRaw,researchStatus:row.researchStatus||'unknown',researchTargetLevel:row.targetLevel??null,sourceType:source,evidence:row.sourceText||'Am Original geprüft',capturedAt:at,updatedAt:at,effectiveAt:at,previousEntryId:old?.id||null,revision:(old?.revision||0)+1,knowledgeVersion:VERSION});
   }return prepared;
