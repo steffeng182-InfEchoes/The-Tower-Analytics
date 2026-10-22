@@ -748,8 +748,12 @@ function bind(){
    const entries=json.accountEntries.filter(e=>e&&typeof e.id==='string'&&e.id.length<100&&ids.has(e.playerId)&&ACCOUNT_CATEGORIES.includes(e.category)&&typeof e.name==='string'&&e.name.length<=100&&typeof e.value==='string'&&e.value.length<=100&&typeof e.updatedAt==='string'&&Number.isFinite(Date.parse(e.updatedAt))&&(!e.effectiveAt||Number.isFinite(Date.parse(e.effectiveAt)))&&(!e.valueType||['confirmed','observed','estimated'].includes(e.valueType)));
    if(entries.length!==json.accountEntries.length)throw Error('Ungültige Account-Einträge.');
    if(!confirm('Sicherung importieren? Vorhandene Daten bleiben erhalten. Gleiche IDs werden übersprungen.'))return;
-   const existingProfileIds=new Set((await readAll('profiles')).map(p=>p.id)),existingEntryIds=new Set((await readAll('accountEntries')).map(e=>e.id));
-   await new Promise((resolve,reject)=>{const tx=db.transaction(['profiles','accountEntries'],'readwrite');for(const p of profiles)if(!existingProfileIds.has(p.id))tx.objectStore('profiles').put(p);for(const e of entries)if(!existingEntryIds.has(e.id))tx.objectStore('accountEntries').put(e);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Wiederherstellung abgebrochen'));});
+   if(ids.size!==profiles.length||new Set(entries.map(e=>e.id)).size!==entries.length)throw Error('Doppelte IDs im Account-Backup. Es wurde nichts verändert.');
+   await new Promise((resolve,reject)=>{
+    const tx=db.transaction(['profiles','accountEntries'],'readwrite'),ps=tx.objectStore('profiles'),es=tx.objectStore('accountEntries'),pr=ps.getAll(),er=es.getAll();let ready=0;
+    const apply=()=>{if(++ready!==2)return;const profileIds=new Set(pr.result.map(p=>p.id)),entryIds=new Set(er.result.map(e=>e.id));for(const p of profiles)if(!profileIds.has(p.id)){ps.add(p);profileIds.add(p.id);}for(const e of entries)if(!entryIds.has(e.id)){es.add(e);entryIds.add(e.id);}};
+    pr.onsuccess=apply;er.onsuccess=apply;tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Wiederherstellung abgebrochen'));
+   });
    await loadProfiles();state.alert='✓ Account-Backup importiert.';await refresh();
   }catch(e){alert('Wiederherstellung nicht möglich: '+String(e.message||e));}
  };let storageButton=document.querySelector('#checkstorage');if(storageButton)storageButton.onclick=async()=>{try{if(!navigator.storage?.estimate)throw Error('Nicht unterstützt');state.storageEstimate=await navigator.storage.estimate();state.alert='✓ Browser-Speicher ausgelesen.';}catch(e){state.alert='⚠ Speicherabfrage hier nicht verfügbar.';}render();};let tierFilter=document.querySelector('#tierfilter');if(tierFilter)tierFilter.onchange=e=>{state.tierFilter=e.target.value;render();};let raw=document.querySelector('#raw');if(raw)raw.oninput=e=>{state.text=e.target.value;state.preview=null;};let analyze=document.querySelector('#analyze');if(analyze)analyze.onclick=async()=>{
