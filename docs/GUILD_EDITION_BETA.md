@@ -18,7 +18,7 @@ Modules: `guild/client.js` (pinned Supabase SDK lazy import), `app.js` (auth/wor
 
 ## Behavior
 
-Registration is an explicit checkbox on the email login form (`shouldCreateUser`); ordinary login does not create an account automatically. SDK manages PKCE, stored sessions, auto-refresh and cross-tab Auth events. Cloud operations check `getUser` before API access; API/expiry/network failures preserve the local workspace and show an actionable message. Explicit logout clears the view before changing identity. Account switch reloads the document and does not reuse the previous state, text, preview or IndexedDB handle.
+Registration is an explicit checkbox on the email login form (`shouldCreateUser`); ordinary login does not create an account automatically. SDK manages PKCE, stored sessions, auto-refresh and cross-tab Auth events. Cloud operations check `getUser` before API access; API/expiry/network failures preserve the local workspace and show an actionable message. The private Masterchat link is scoped per Guild account as well; its original local key remains untouched. Explicit logout clears the view before changing identity. Account switch reloads the document and does not reuse the previous state, text, preview or IndexedDB handle.
 
 A narrow service worker atomically caches only the static app shell for offline reloads. It never caches Auth, Data API, CDN responses or callback query URLs. Updates activate after existing app tabs close. When changing app files or public config for deployment, bump `CACHE` in `guild-worker.js` in the same release; otherwise installed clients keep their prior shell. Service-worker failure leaves the running app usable and data intact; first-ever offline visits cannot load an uncached app.
 
