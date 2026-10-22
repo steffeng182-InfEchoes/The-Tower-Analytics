@@ -1,0 +1,28 @@
+# The hosted admin fixture is disabled after acceptance. Before a deliberate rerun,
+# temporarily deploy the reviewed fixture-template.ts with renewed expiry; disable
+# it again afterwards. See docs/GUILD_EDITION_BETA.md. Local real RLS CI stays active.
+name: Hosted Tower beta acceptance
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: hosted-tower-acceptance
+  cancel-in-progress: true
+jobs:
+  hosted-beta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install chromium
+      - name: Real hosted Auth, RLS, API, browser, offline and account-switch acceptance
+        run: node scripts/hosted-acceptance.cjs
+      - name: Public database health under its restricted RLS policy
+        run: node scripts/cloud-health.cjs

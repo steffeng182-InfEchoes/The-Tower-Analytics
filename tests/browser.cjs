@@ -6,11 +6,11 @@ const http=require('node:http');
 const html=fs.readFileSync('index.html');
 const report=(day=17,wave=2632)=>`Battle Report\nBattle Date Oct ${day}, 2026 10:02 PM\nReal Time 4h 51m 17s\nTier 4\nWave ${wave}\nCoins Earned 274,31M\nCoins Per Hour 56,50M\nCells Earned 1,43K`;
 (async()=>{
- const server=http.createServer((req,res)=>{res.setHeader('Content-Type','text/html');res.end(html);});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const server=http.createServer((req,res)=>{const path=new URL(req.url,'http://localhost').pathname;if(path==='/guild-worker.js'||path.startsWith('/guild/')&&/^\/guild\/[a-z0-9]+\.js$/.test(path)){try{res.setHeader('Content-Type','application/javascript');res.end(fs.readFileSync('.'+path));}catch{res.writeHead(404);res.end();}}else{res.setHeader('Content-Type','text/html');res.end(html);}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const launch={headless:true};if(process.env.TOWER_CHROMIUM_EXECUTABLE){launch.executablePath=process.env.TOWER_CHROMIUM_EXECUTABLE;launch.args=['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--no-zygote'];}
  let browser;try{
  browser=await chromium.launch(launch);const page=await browser.newPage({viewport:{width:384,height:400},timezoneId:'Europe/Berlin'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- const url=`http://127.0.0.1:${server.address().port}`;await page.goto(url);await page.waitForSelector('#view h1');
+ await page.addInitScript(()=>{if(!localStorage.getItem('tower-language'))localStorage.setItem('tower-language','de');});const url=`http://127.0.0.1:${server.address().port}`;await page.goto(url);try{await page.waitForSelector('#view h1');}catch(error){console.error('Startup diagnostic:',await page.locator('#view').textContent(),errors);throw error;}
  const tab=async name=>{await page.locator(`#bottomnav [data-tab="${name}"]`).click();};
  for(const size of [{width:320,height:360},{width:384,height:400},{width:412,height:460}]){await page.setViewportSize(size);for(const t of ['account','dashboard','import','runs','diagnostics','data']){await tab(t);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${t} at ${size.width}`);}}
 
@@ -42,3 +42,4 @@ const report=(day=17,wave=2632)=>`Battle Report\nBattle Date Oct ${day}, 2026 10
  console.log('Chromium passed: 3 mobile sizes × 6 tabs, 30-report import/reimport, reload persistence, historical sorting, date dialogs, append-only account edits, OCR-text matching/save UI, mixed legacy mode headings at three mobile sizes and aggregate recalculation after manual corrections.');
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});
+

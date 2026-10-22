@@ -1,0 +1,29 @@
+name: Tower database health
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */12 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: tower-cloud-health
+  cancel-in-progress: false
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Read the Tower database under RLS
+        run: node scripts/cloud-health.cjs
+        env:
+          TOWER_SUPABASE_URL: ${{ secrets.TOWER_SUPABASE_URL }}
+          TOWER_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TOWER_SUPABASE_PUBLISHABLE_KEY }}
+          TOWER_HEALTH_EMAIL: ${{ secrets.TOWER_HEALTH_EMAIL }}
+          TOWER_HEALTH_PASSWORD: ${{ secrets.TOWER_HEALTH_PASSWORD }}
+      - name: Explain failed health check
+        if: failure()
+        run: echo '::error::Tower database check failed. Inspect configuration, Auth, project pause status and migrations. Enable GitHub Actions failure notifications for this workflow.'
