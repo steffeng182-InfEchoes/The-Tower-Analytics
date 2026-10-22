@@ -1,0 +1,57 @@
+# WORK 05 – Guild Edition beta candidate
+
+## Scope and safety
+
+Implementation stays on `feature/guild-supabase-foundation`. Main and the current Pages deployment remain unchanged. This is a **candidate**, not a release approved for real members. Original IndexedDB `tower-analytics-alpha` remains version 2, with no automatic rewrite/backfill. Each authenticated UUID gets its own `tower-analytics-guild-<uuid>` database; signed-out mode uses a separate empty workspace. After logout, opening original local data requires an explicit action. Browser data is not encrypted: anyone with access to this browser profile can inspect its storage. Logout prevents data from appearing in another account's app UI.
+
+Modules: `guild/client.js` (pinned Supabase SDK lazy import), `app.js` (auth/workspaces/migration), `sync.js` (three-way merge), `backup.js`, `i18n.js`, `config.js`. No rewrite of parser, mode classification or farming calculations. Experimental Account Intelligence is hidden in signed-in workspaces; original local functionality remains available.
+
+## External setup, still required
+
+1. Explicitly choose the Supabase organization. Available organization: **Steffen Giesen**, `fagvfmvqsraztprclfrl`, observed Free plan. Tool requires the user's organization choice. No choice has been received. Create a NEW project **Tower Analytics**, `eu-central-1` (Frankfurt), Free only. Do not modify **Berater-CRM**, project `oxaisrilkngxlwudruhn`; application and health tooling reject that project.
+2. Apply `supabase/migrations/20261018_guild_foundation.sql` to the NEW project only. The prepared migration was not previously applied to a Tower database; it is extended in place. If someone has already applied its earlier version, stop and generate a proper incremental migration using the CLI; do not rerun it against an existing schema.
+3. In Auth URL Configuration, set Site URL and exact allowed redirect to the isolated beta hosting URL, including its trailing repository path. Planned production URL: `https://steffeng182-infechoes.github.io/The-Tower-Analytics/`. Use the exact preview URL while testing. Never send callbacks to a route that Pages cannot serve. The client uses PKCE and sends users back to the existing document; open the email link in the same browser that requested it. Do not broaden the allowlist with arbitrary origins.
+4. Configure Email provider and confirmation/Magic Link templates, verify email delivery. Supabase default email delivery may restrict recipient addresses/rate; configure SMTP if necessary. No SMTP purchases are authorized. No emails have been sent by this task.
+5. Put only the NEW project's HTTPS URL and `sb_publishable_...` key into `guild/config.js`. Empty config deliberately keeps local mode working. Never use a service role/secret key. The SDK is pinned to `2.57.4` on jsDelivr, loaded only when cloud is configured. Cloud initialization requires network; local app code needs no SDK download.
+6. Provide two confirmed test users with distinct UUIDs; use environment-only `TOWER_TEST_A_EMAIL`, `TOWER_TEST_A_PASSWORD`, `TOWER_TEST_B_EMAIL`, `TOWER_TEST_B_PASSWORD`, `TOWER_SUPABASE_URL`, `TOWER_SUPABASE_PUBLISHABLE_KEY`. Run `npm run test:rls`. Passwords are only a test harness login mechanism; normal app login uses email Magic Link.
+7. Set GitHub Actions secrets for the health workflow: `TOWER_SUPABASE_URL`, `TOWER_SUPABASE_PUBLISHABLE_KEY`, `TOWER_HEALTH_EMAIL`, `TOWER_HEALTH_PASSWORD`. The dedicated confirmed health account has no user reports and has ordinary authenticated/RLS-limited access. No service key required. Dispatch `Tower database health`; enable GitHub Actions failure email notifications. Scheduled workflows run only when present on the default branch, and can be delayed/disabled by GitHub. No default-branch deployment is performed here.
+
+## Behavior
+
+Registration is an explicit checkbox on the email login form (`shouldCreateUser`); ordinary login does not create an account automatically. SDK manages PKCE, stored sessions, auto-refresh and cross-tab Auth events. Cloud operations check `getUser` before API access; API/expiry/network failures preserve the local workspace and show an actionable message. Explicit logout clears the view before changing identity. Account switch reloads the document and does not reuse the previous state, text, preview or IndexedDB handle.
+
+Sync is explicitly invoked. Reconnecting shows Online and allows retry; it does not upload silently. The snapshot includes original run payloads, modes/strategies, import dates, local profiles, settings and account entries. Runs use a canonical report SHA-256 key per owner; other documents use stable local IDs. Unique indexes prevent repeated inserts. Cloud revisions are server-generated, updates compare the last revision, and deletions use tombstones. No last-write-wins. A lost response is safe to retry: the next read verifies existing cloud values. Both changed versions are stored as a conflict in local metadata and exportable as private JSON; conflicts block acceptance and require manual review. No automatic conflict resolution UI is claimed.
+
+Legacy migration requires downloading the complete original database backup and checking consent, selecting one original profile, insert-only copying into a deterministic account namespace, synchronizing, then comparing actual cloud payloads against the copied local rows. Retries preserve already-edited target rows. Unchanged existing reports are reused; conflicting duplicates stop the transfer. Source database is read-only throughout the assistant. A failed upload may leave local copies/pending cloud rows; retry is safe. Backup files include private data. Backups preserve original raw records; normal backup and restore are available in the Guild panel. Full restore is validated and insert-only in one transaction, and never imports sync baseline/authorization metadata.
+
+German is the initial default; language is selectable and persisted. The Guild UI uses central keyed DE/EN messages. Legacy navigation, import, History and farming text uses an exact-phrase translation adapter; game parser labels and report input are unchanged. Some dynamic legacy notices and dialogs still need translation completion; do not claim 100% English coverage. Account Intelligence translations are outside this beta.
+
+## Database design
+
+`player_runs`: owned original run JSON, per-owner canonical key/source hash, soft deletion and optimistic revisions. `player_documents`: owned profiles, settings and future account entries, JSON extension point. `player_profiles`: dedicated personal metadata/settings table retained from the foundation. Client profile documents currently carry the player's displayed profile; no automatic auth trigger with elevated privileges is used.
+
+All tables have SELECT/INSERT/UPDATE/DELETE ownership policies using `auth.uid()`, UPDATE has both USING and WITH CHECK, anon has no table access. No authorization uses user-editable metadata. Trigger and health functions are invoker functions with empty search_path and restricted execution grants. RLS **must be verified against two real authenticated users before release**. Source inspection is not a substitute.
+
+## Health best effort
+
+`cloud-health.yml` schedules a check at 00:17 and 12:17 UTC. It logs into a dedicated ordinary account, invokes `tower_health`, verifies its schema marker and database result, then attempts to revoke that short-lived session. The SQL reads an RLS-protected table without modifying reports or creating dummy rows. Missing config, bad Auth, network/HTTP failures or wrong responses fail visibly. Credentials and tokens are not logged. Auth itself can update its own session metadata.
+
+Official rules checked 2026-10-22: [Free project pausing](https://supabase.com/docs/guides/platform/free-project-pausing) describes low database activity over seven days and says low usage can still lead to pausing. No guarantee against pausing is made. Only a paid plan rules that out; no upgrade is authorized. GitHub workflow notifications are the prepared alert mechanism; no messages to third parties have been sent.
+
+## Verification record
+
+Local: 15 dependency-free tests passed (9 merge/config/idempotency, 3 full-backup validation, 3 health/failure tests). All added JS and the inline app script pass syntax checks. `npm ci` is blocked by executor network permissions (EPERM to the configured proxy); local Chromium is blocked by socket sandbox restrictions. Existing tests and new browser tests are submitted to branch CI. The new browser suite uses a clearly marked cloud adapter; it tests application behavior, not RLS.
+
+Real RLS harness was invoked and exited with `Real RLS test NOT RUN` because project/test credentials are missing. No real Auth, database migration, advisor audit, email delivery, authenticated two-account API access or scheduled production health run has been verified. Physical Android acceptance is outstanding. See the PR and current CI result for subsequent actual validation.
+
+## Android acceptance after external setup and passing RLS
+
+1. In the CURRENT live app, download the ordinary JSON run backup and account backup. Keep them in Android Files. Do not clear Chrome storage or uninstall anything.
+2. Open the isolated beta URL on S24 Ultra in 50/50 split-screen. Select Deutsch. Check existing local reports are readable when using the same origin; a different preview origin cannot access the production origin's IndexedDB. On a different origin, restore a trusted exported backup explicitly.
+3. Register/log in as member A via email link in the same Chrome browser. Its account workspace must initially be empty. Select an original profile in the transfer assistant, save/check the full JSON file, explicitly consent, transfer and verify. Repeat: no duplicates; original source rows unchanged.
+4. Import a new report. Select Normal/Tournament/Dissonance deliberately. Sync, reload and check counts, original report, notes and farming membership. Tournament/Dissonance must stay outside normal farming aggregates.
+5. In airplane mode import/edit another run; data must survive reload. Reconnect and sync. If a conflict appears, export both versions; do not delete originals to force success.
+6. Logout, then log in as B: no A reports or account entries visible. B imports the same report independently. In another browser/device A must still see its own rows. Run real RLS API tests as well.
+7. Switch DE/EN, inspect 320/384/412 px widths, download/restore a full backup, verify Magic Link expiry/errors and check the health workflow failure notification.
+
+**Release decision: NO until the new project is configured, the full branch CI passes, real two-account RLS passes, email login/sync is verified and Android originals are confirmed preserved.**
