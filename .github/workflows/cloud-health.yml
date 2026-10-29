@@ -1,0 +1,37 @@
+name: Tower database health
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */12 * * *'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cloud-health.yml'
+      - 'scripts/cloud-health.cjs'
+      - 'tests/ops/cloud-health.test.cjs'
+permissions:
+  contents: read
+concurrency:
+  group: tower-cloud-health
+  cancel-in-progress: false
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify health-check safeguards
+        run: node --test tests/ops/cloud-health.test.cjs
+      - name: Read the Tower database under RLS
+        run: node scripts/cloud-health.cjs
+      - name: Record successful database check
+        if: success()
+        run: echo 'Tower Analytics database reachable. Read-only guild-v1 RPC verified. Schedule 00:17 and 12:17 UTC; best effort.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Explain failed database check
+        if: failure()
+        run: |
+          echo '::error::Tower database check failed. Inspect the project status, API configuration and RPC migration. No user records were changed.'
+          echo 'Tower database health FAILED. See step logs. Configure GitHub Actions failure notifications in your GitHub notification settings.' >> "$GITHUB_STEP_SUMMARY"
